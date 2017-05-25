@@ -1,4 +1,4 @@
-(defproject org.clojars.mike706574/spiro-webapp "0.0.1-SNAPSHOT"
+(defproject org.clojars.mike706574/spiro "0.0.1-SNAPSHOT"
   :description "Describe me!"
   :url "https://github.com/mike706574/spiro-webapp"
   :license {:name "Eclipse Public License"

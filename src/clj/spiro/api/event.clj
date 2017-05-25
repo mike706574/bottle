@@ -6,17 +6,19 @@
 
 (defprotocol EventManager
   "Manages events."
+  (events [this] "Retrieve all events.")
   (store [this data] "Get the next event identifier."))
 
 (defrecord RefEventManager [counter events]
   EventManager
+  (events [this]
+    @events)
   (store [this data]
     (let [id (alter counter inc)
           event (assoc data :spiro/event-id id)]
       (alter events assoc id event)
       event)))
 
-(defn manager
-  []
+(defn manager []
   (component/using (map->RefEventManager {:counter (ref 0)})
     [:events]))

@@ -56,7 +56,6 @@
     (let [mike-conn (connect! ws-url "mike")]
       (println "Connected!"))))
 
-
 (defn transit-get
   [url]
   (parse @(http/get url
@@ -64,7 +63,17 @@
                                "Accept" "application/transit+json"}
                      :throw-exceptions false})))
 
+(defn transit-post
+  [url body]
+  (parse @(http/post url
+                     {:headers {"Content-Type" "application/transit+json"
+                                "Accept" "application/transit+json"}
+                      :body (encode body)
+                      :throw-exceptions false})))
+
 (comment
-  (transit-get "http://localhost:8001/api/hello")
+  (transit-get "http://localhost:8001/api/events")
+  (transit-post "http://localhost:8001/api/events" {:spiro/event-type :foo})
+
 
   )

@@ -12,7 +12,7 @@
   (log/info "Building system.")
   (log/merge-config!
    {:appenders {:spit (appenders/spit-appender
-                       {:fname "/home/mteaster/wut.log"})}})
+                       {:fname "/home/mike/wut.log"})}})
   {:event-bus (bus/event-bus)
    :connections (atom {})
    :events (ref {})
