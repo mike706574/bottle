@@ -22,11 +22,17 @@
    [manifold.bus :as bus]
    [spiro.server.system :as system]
    [spiro.server.message :as message]
-   [taoensso.timbre :as log]))
+   [taoensso.timbre :as log]
+   ;; Messaging
+   [clamq.activemq :as amq]
+   [clamq.protocol.consumer :as consumer]
+   [clamq.protocol.producer :as producer]))
 
 (log/set-level! :trace)
 
-(def config {:id "spiro-server" :port 8001})
+(def config {:id "spiro-server"
+             :port 8001
+             :log-path "/tmp"})
 
 (defonce system nil)
 
@@ -75,3 +81,17 @@
   (go))
 
 (defn connections [] @(:connections system))
+
+
+(comment
+
+  (def url "tcp://qdswamsl27.qg.com:61616")
+  (def cconn (amq/activemq-connection url))
+
+
+  (def pconn (amq/activemq-connection url))
+
+
+
+
+  )
