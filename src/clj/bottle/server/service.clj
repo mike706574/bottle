@@ -1,10 +1,10 @@
-(ns spiro.server.service
+(ns bottle.server.service
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [aleph.http :as aleph-http]
 
-            [spiro.server.connection :as conn]
-            [spiro.server.handler :as handler])
+            [bottle.server.connection :as conn]
+            [bottle.server.handler :as handler])
   (:gen-class :main true))
 
 (defn- already-started

@@ -1,4 +1,4 @@
-(ns spiro.server.http
+(ns bottle.server.http
   (:require [cognitect.transit :as transit]
             [clojure.edn :as edn]
             [clojure.set :as set]
@@ -102,10 +102,10 @@
        (not-acceptable ~request)
        (let [~body-sym (parsed-body ~request)]
          (if-not ~body-sym
-           (body-response 400 ~request {:spiro.server/message "Invalid request body representation."})
+           (body-response 400 ~request {:bottle.server/message "Invalid request body representation."})
            (if-let [validation-failure# (spec/explain-data ~body-spec ~body-sym)]
-             (body-response 400 ~request {:spiro.server/message "Invalid request body."
-                                          :spiro.server/data validation-failure#})
+             (body-response 400 ~request {:bottle.server/message "Invalid request body."
+                                          :bottle.server/data validation-failure#})
              ~@body)))))
 
 (defmacro handle-exceptions
@@ -114,4 +114,4 @@
      ~@body
      (catch Exception e#
        (log/error e# "An exception was thrown while processing a request.")
-       (body-response 500 ~request {:spiro.server/message "An error occurred."}))))
+       (body-response 500 ~request {:bottle.server/message "An error occurred."}))))

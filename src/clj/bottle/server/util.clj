@@ -1,4 +1,4 @@
-(ns spiro.server.util)
+(ns bottle.server.util)
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 

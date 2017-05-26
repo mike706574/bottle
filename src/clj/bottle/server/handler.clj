@@ -1,7 +1,7 @@
-(ns spiro.server.handler
+(ns bottle.server.handler
   (:require [clojure.string :as str]
             [com.stuartsierra.component :as component]
-            [spiro.server.api.handler :as api-handler]))
+            [bottle.server.api.handler :as api-handler]))
 
 (defprotocol HandlerFactory
   "Builds a request handler."

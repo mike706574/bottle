@@ -1,5 +1,5 @@
-(ns spiro.server.api.handler
-  (:require [spiro.server.api.routes :as api-routes]
+(ns bottle.server.api.handler
+  (:require [bottle.server.api.routes :as api-routes]
             [ring.middleware.defaults :refer [wrap-defaults
                                               api-defaults]]
             [taoensso.timbre :as log]))

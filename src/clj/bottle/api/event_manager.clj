@@ -1,7 +1,7 @@
-(ns spiro.api.event-manager
+(ns bottle.api.event-manager
   (:require [com.stuartsierra.component :as component]
             [manifold.stream :as s]
-            [spiro.server.util :as util]
+            [bottle.server.util :as util]
             [taoensso.timbre :as log]))
 
 (defprotocol EventManager
@@ -15,7 +15,7 @@
     @events)
   (store [this data]
     (let [id (alter counter inc)
-          event (assoc data :spiro/event-id id)]
+          event (assoc data :bottle/event-id id)]
       (alter events assoc id event)
       event)))
 

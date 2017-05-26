@@ -1,10 +1,10 @@
-(ns spiro.server.system
+(ns bottle.server.system
   (:require [manifold.bus :as bus]
-            [spiro.api.event-consumer :as event-consumer]
-            [spiro.api.event-manager :as event-manager]
-            [spiro.server.connection :as conn]
-            [spiro.server.handler :as handler]
-            [spiro.server.service :as service]
+            [bottle.api.event-consumer :as event-consumer]
+            [bottle.api.event-manager :as event-manager]
+            [bottle.server.connection :as conn]
+            [bottle.server.handler :as handler]
+            [bottle.server.service :as service]
             [taoensso.timbre :as log]
             [taoensso.timbre.appenders.core :as appenders]))
 

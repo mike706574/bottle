@@ -1,4 +1,4 @@
-(ns spiro.server.message
+(ns bottle.server.message
   (:require [cognitect.transit :as transit]))
 
 (defn decode

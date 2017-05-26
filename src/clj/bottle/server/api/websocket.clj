@@ -1,10 +1,10 @@
-(ns spiro.server.api.websocket
+(ns bottle.server.api.websocket
   (:require [aleph.http :as http]
             [manifold.stream :as s]
             [manifold.deferred :as d]
             [manifold.bus :as bus]
-            [spiro.server.connection :as conn]
-            [spiro.server.message :refer [encode decode]]
+            [bottle.server.connection :as conn]
+            [bottle.server.message :refer [encode decode]]
             [taoensso.timbre :as log]))
 
 (defn non-websocket-response

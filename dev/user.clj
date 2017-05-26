@@ -20,15 +20,15 @@
    [manifold.stream :as s]
    [manifold.deferred :as d]
    [manifold.bus :as bus]
-   [spiro.server.system :as system]
-   [spiro.server.message :as message]
+   [bottle.server.system :as system]
+   [bottle.server.message :as message]
    [taoensso.timbre :as log]
    ;; Messaging
 ))
 
 (log/set-level! :trace)
 
-(def config {:id "spiro-server"
+(def config {:id "bottle-server"
              :port 8001
              :log-path "/tmp"})
 

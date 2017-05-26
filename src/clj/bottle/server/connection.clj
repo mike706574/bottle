@@ -1,7 +1,7 @@
-(ns spiro.server.connection
+(ns bottle.server.connection
   (:require [com.stuartsierra.component :as component]
             [manifold.stream :as s]
-            [spiro.server.util :as util]
+            [bottle.server.util :as util]
             [taoensso.timbre :as log]))
 
 (defprotocol ConnectionManager

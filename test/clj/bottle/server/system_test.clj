@@ -1,11 +1,11 @@
-(ns spiro.server.system-test
+(ns bottle.server.system-test
   (:require [aleph.http :as http]
             [com.stuartsierra.component :as component]
             [clojure.test :refer [deftest testing is]]
             [manifold.stream :as s]
             [manifold.deferred :as d]
-            [spiro.server.system :as system]
-            [spiro.server.message :refer [encode decode]]
+            [bottle.server.system :as system]
+            [bottle.server.message :refer [encode decode]]
             [taoensso.timbre :as log]))
 
 (def config {:id "test" :port 10000})
@@ -73,7 +73,7 @@
 
 (comment
   (transit-get "http://localhost:8001/api/events")
-  (transit-post "http://localhost:8001/api/events" {:spiro/event-type :foo})
+  (transit-post "http://localhost:8001/api/events" {:bottle/event-type :foo})
 
 
   )

@@ -1,7 +1,7 @@
-(ns spiro.api.event-consumer
+(ns bottle.api.event-consumer
   (:require [clojure.string :as str]
             [com.stuartsierra.component :as component]
-            [spiro.server.util :as util]
+            [bottle.server.util :as util]
             [taoensso.timbre :as log]
             [clamq.activemq :as amq]
             [clamq.protocol.connection :as conn]

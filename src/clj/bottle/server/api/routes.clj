@@ -1,19 +1,19 @@
-(ns spiro.server.api.routes
+(ns bottle.server.api.routes
   (:require [clojure.spec.alpha :as s]
             [compojure.core :as compojure :refer [ANY DELETE GET POST PUT]]
             [compojure.route :as route]
-            [spiro.api.event-manager :as event-manager]
-            [spiro.server.api.websocket :as websocket]
-            [spiro.server.http :refer [with-body
+            [bottle.api.event-manager :as event-manager]
+            [bottle.server.api.websocket :as websocket]
+            [bottle.server.http :refer [with-body
                                       handle-exceptions
                                       body-response
                                       not-acceptable
                                       parsed-body
                                       unsupported-media-type]]))
 
-(s/def :spiro/event-id keyword?)
-(s/def :spiro/event-type keyword?)
-(s/def :spiro/event (s/keys :req [:spiro/event-type]))
+(s/def :bottle/event-id keyword?)
+(s/def :bottle/event-type keyword?)
+(s/def :bottle/event (s/keys :req [:bottle/event-type]))
 
 (defn handle-retrieving-events
   [{:keys [event-manager]} request]
@@ -25,7 +25,7 @@
 (defn handle-creating-event
   [{:keys [event-manager]} request]
   (handle-exceptions request
-    (with-body [event :spiro/event request]
+    (with-body [event :bottle/event request]
       (let [response (dosync (event-manager/store event-manager event))]
         (body-response 201 request response)))))
 
