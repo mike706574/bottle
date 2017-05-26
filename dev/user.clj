@@ -24,9 +24,7 @@
    [spiro.server.message :as message]
    [taoensso.timbre :as log]
    ;; Messaging
-   [clamq.activemq :as amq]
-   [clamq.protocol.consumer :as consumer]
-   [clamq.protocol.producer :as producer]))
+))
 
 (log/set-level! :trace)
 
@@ -85,12 +83,20 @@
 
 (comment
 
-  (def url "tcp://qdswamsl27.qg.com:61616")
+  (def url "tcp://localhost:61616")
   (def cconn (amq/activemq-connection url))
+  (def consumer (conn/consumer cconn {:endpoint "foo"
+                                      :on-message (fn [message]
+                                                    (println message))
+                                      :transacted true}))
+  (consumer/start consumer)
+
 
 
   (def pconn (amq/activemq-connection url))
-
+  (def producer (conn/producer pconn))
+  (producer/publish producer "foo" "what")
+  producer
 
 
 

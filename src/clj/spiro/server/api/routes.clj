@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [compojure.core :as compojure :refer [ANY DELETE GET POST PUT]]
             [compojure.route :as route]
-            [spiro.api.event :as event]
+            [spiro.api.event-manager :as event-manager]
             [spiro.server.api.websocket :as websocket]
             [spiro.server.http :refer [with-body
                                       handle-exceptions
@@ -19,14 +19,14 @@
   [{:keys [event-manager]} request]
   (handle-exceptions request
     (or (unsupported-media-type request)
-        (let [response (event/events event-manager)]
+        (let [response (event-manager/events event-manager)]
           (body-response 200 request response)))))
 
 (defn handle-creating-event
   [{:keys [event-manager]} request]
   (handle-exceptions request
     (with-body [event :spiro/event request]
-      (let [response (dosync (event/store event-manager event))]
+      (let [response (dosync (event-manager/store event-manager event))]
         (body-response 201 request response)))))
 
 (defn routes

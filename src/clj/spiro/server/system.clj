@@ -1,6 +1,7 @@
 (ns spiro.server.system
   (:require [manifold.bus :as bus]
-            [spiro.api.event :as event-api]
+            [spiro.api.event-consumer :as event-consumer]
+            [spiro.api.event-manager :as event-manager]
             [spiro.server.connection :as conn]
             [spiro.server.handler :as handler]
             [spiro.server.service :as service]
@@ -20,6 +21,6 @@
      :connections (atom {})
      :events (ref {})
      :conn-manager (conn/manager)
-     :event-manager (event-api/manager)
+     :event-manager (event-manager/event-manager)
      :handler-factory (handler/factory)
      :app (service/aleph-service config)}))

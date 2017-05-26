@@ -1,4 +1,4 @@
-(ns spiro.api.event
+(ns spiro.api.event-manager
   (:require [com.stuartsierra.component :as component]
             [manifold.stream :as s]
             [spiro.server.util :as util]
@@ -19,6 +19,6 @@
       (alter events assoc id event)
       event)))
 
-(defn manager []
+(defn event-manager []
   (component/using (map->RefEventManager {:counter (ref 0)})
     [:events]))
