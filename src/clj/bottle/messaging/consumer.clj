@@ -1,5 +1,6 @@
 (ns bottle.messaging.consumer
   (:require [bottle.util :as util]
+            [bottle.messaging.connector :as connector]
             [bottle.messaging.handler :as handler]
             [clamq.protocol.connection :as conn]
             [clamq.protocol.consumer :as consumer]
@@ -29,7 +30,7 @@
   [{:keys [:bottle/event-broker-path :bottle/event-endpoint] :as config}]
   (component/using
    (map->Consumer {:id (util/uuid)
-                        :broker-path event-broker-path
-                        :endpoint event-endpoint
-                        :connector (mq/connector config) })
-    {:handler :message-handler}))
+                   :broker-path event-broker-path
+                   :endpoint event-endpoint
+                   :connector (connector/connector config) })
+   {:handler :message-handler}))

@@ -1,9 +1,10 @@
 (ns bottle.message
   (:require [clojure.edn :as edn]
-            [cognitect.transit :as transit]
-            [taoensso.timbre :as log]))
+            [cognitect.transit :as transit]))
 
-(defmulti decode-stream (fn [content-type body] content-type))
+(defmulti ^:private decode-stream
+  "Encodes the string using the given content-type."
+  (fn [content-type body] content-type))
 
 (defmethod decode-stream "application/edn"
   [_ body]
@@ -17,11 +18,16 @@
   [_ body]
   (transit/read (transit/reader body :msgpack)))
 
-(defn decode-string
+(defmethod decode-stream :default
+  [content-type body]
+  (throw (ex-info (str "Content type \"" content-type "\" is not supported."
+                       {:content-type content-type}))))
+
+(defn ^:private decode-string
   [content-type body]
   (decode-stream content-type (java.io.ByteArrayInputStream. (.getBytes body))))
 
-(defn decode-bytes
+(defn ^:private decode-bytes
   [content-type body]
   (decode-stream content-type (java.io.ByteArrayInputStream. body)))
 
@@ -33,7 +39,10 @@
      :else decode-bytes)
    content-type body))
 
-(defmulti encode (fn [content-type body] content-type))
+(defmulti encode
+  "Encodes the string using the given content-type."
+  (fn [content-type body] content-type))
+
 (defmethod encode "application/edn"
   [_ body]
   (pr-str body))
@@ -49,3 +58,9 @@
   (let [out (java.io.ByteArrayOutputStream.)]
     (transit/write (transit/writer out :msgpack) body)
     (.toByteArray out)))
+
+(defmethod encode :default
+  [content-type body]
+  (throw (ex-info (str "Content type \"" content-type "\" is not supported."
+                       {:content-type content-type
+                        :body body}))))

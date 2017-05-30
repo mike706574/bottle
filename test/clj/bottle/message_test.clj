@@ -1,17 +1,17 @@
-(ns bottle.messaging.content-test
+(ns bottle.message-test
   (:require [clojure.test :refer [deftest testing is]]
             [cognitect.transit :as transit]
-            [bottle.messaging.content :as content]))
+            [bottle.message :as message]))
 
 (deftest encoding
   (testing "application/edn"
-    (is (= "{:foo \"bar\"}" (content/encode
+    (is (= "{:foo \"bar\"}" (message/encode
                              "application/edn"
                              {:foo "bar"}))))
 
   (testing "application/transit+json"
     (let [data {:foo "bar"}
-          encoded-bytes (content/encode "application/transit+json" data)
+          encoded-bytes (message/encode "application/transit+json" data)
           decoded-bytes (transit/read
                          (transit/reader
                           (java.io.ByteArrayInputStream. encoded-bytes) :json))]
@@ -19,7 +19,7 @@
 
   (testing "application/transit+msgpack"
     (let [data {:foo "bar"}
-          encoded-bytes (content/encode "application/transit+msgpack" data)
+          encoded-bytes (message/encode "application/transit+msgpack" data)
           decoded-bytes (transit/read
                          (transit/reader
                           (java.io.ByteArrayInputStream. encoded-bytes) :msgpack))]
@@ -27,7 +27,7 @@
 
 (deftest decoding
   (testing "application/edn"
-    (is (= {:foo "bar"} (content/decode "application/edn" "{:foo \"bar\"}"))))
+    (is (= {:foo "bar"} (message/decode "application/edn" "{:foo \"bar\"}"))))
 
   (testing "application/transit+json"
     (let [data {:foo "bar"}
@@ -35,7 +35,7 @@
                            (transit/write (transit/writer out :json) data)
                            (.toByteArray out))]
       (is (= {:foo "bar"}
-             (content/decode
+             (message/decode
               "application/transit+json"
               encoded-string)))))
 
@@ -45,6 +45,6 @@
                            (transit/write (transit/writer out :msgpack) data)
                            (.toByteArray out))]
       (is (= {:foo "bar"}
-             (content/decode
+             (message/decode
               "application/transit+msgpack"
               encoded-string))))))

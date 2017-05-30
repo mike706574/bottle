@@ -26,7 +26,7 @@
 (defn receive!
   [conn]
   (let [out @(s/try-take! conn :drained 2000 :timeout)]
-    (if (contains? #{:drained :timeout} out) out (message/decode-string out))))
+    (if (contains? #{:drained :timeout} out) out (message/decode content-type out))))
 
 (defn flush!
   [conn]
@@ -41,7 +41,7 @@
 (defn parse
   [request]
   (if (contains? request :body)
-    (update request :body (comp (partial message/decode-stream content-type)))
+    (update request :body (comp (partial message/decode content-type)))
     request))
 
 ;; TODO: Handle errors

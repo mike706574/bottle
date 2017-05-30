@@ -1,5 +1,5 @@
 (ns bottle.server.system
-  (:require [bottle.api.event-consumer :as event-consumer]
+  (:require [bottle.messaging.consumer :as consumer]
             [bottle.api.event-handler :as event-handler]
             [bottle.api.event-manager :as event-manager]
             [bottle.server.connection :as conn]
@@ -49,20 +49,20 @@
   [config]
   (log/info (str "Building " (:bottle/id config) "."))
   (if-let [validation-failure (s/explain-data :bottle/config config)]
-    (do
-      (log/error (str "Invalid configuration:\n"
-                      (util/pretty config)
-                      "Validation failure:\n"
-                      (util/pretty validation-failure)))
-      (throw (ex-info "Invalid configuration." config)))
+    (do (log/error (str "Invalid configuration:\n"
+                        (util/pretty config)
+                        "Validation failure:\n"
+                        (util/pretty validation-failure)))
+        (throw (ex-info "Invalid configuration." config)))
     (do (configure-logging! config)
         {:event-bus (bus/event-bus)
          :events (ref {})
 
+         :message-handler (event-handler/event-handler config)
+         :event-consumer (consumer/consumer config)
          :event-function process-event
-         :event-consumer (event-consumer/event-consumer config)
          :event-manager (event-manager/event-manager config)
-         :event-handler (event-handler/event-handler config)
+
 
          :connections (atom {})
          :conn-manager (conn/manager config)

@@ -35,7 +35,7 @@
   [request]
   (let [content-type (get-in request [:headers "content-type"])]
     (try
-      (message/decode-stream content-type (:body request))
+      (message/decode content-type (:body request))
       (catch Exception ex
         (log/error ex (str "Failed to decode " content-type " request body."))))))
 

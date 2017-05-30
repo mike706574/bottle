@@ -1,18 +1,16 @@
 (ns bottle.api.event-handler
   (:require [bottle.util :as util]
             [bottle.message :as message]
+            [bottle.messaging.handler :as handler]
             [bottle.api.event-manager :as event-manager]
             [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log])
+  (:import [bottle.messaging.handler MessageHandler]))
 
-(defprotocol EventHandler
-  "Handles events."
-  (handle-event [this data] "Get the next event identifier."))
-
-(defrecord BasicEventHandler [manager content-type function]
-  EventHandler
-  (handle-event [this message]
+(defrecord EventMessageHandler [manager content-type function]
+  MessageHandler
+  (handle-message [this message]
     (when-let [decoded-message (try
                                  (message/decode content-type message)
                                  (catch Exception e
@@ -34,6 +32,6 @@
 (defn event-handler
   [config]
   (component/using
-   (map->BasicEventHandler config)
+   (map->EventMessageHandler config)
    {:manager :event-manager
     :function :event-function}))

@@ -1,4 +1,4 @@
-(ns bottle.api.messaging
+(ns bottle.messaging.connector
   (:require [clamq.activemq :as amq]
             [clamq.rabbitmq :as rmq]
             [clamq.protocol.connection :as conn]

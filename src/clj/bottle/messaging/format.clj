@@ -1,1 +1,0 @@
-(ns bottle.messaging.format)
