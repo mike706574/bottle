@@ -15,6 +15,9 @@
 
 (def system (ec/event-consumer config))
 
+(defrecord TestMessageHandler
+    Messagehandler)
+
 (deftest connecting
 
   )
