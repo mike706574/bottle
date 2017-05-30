@@ -1,7 +1,7 @@
 (ns bottle.server.api.routes
-  (:require [clojure.spec.alpha :as s]
-            [compojure.core :as compojure :refer [ANY DELETE GET POST PUT]]
+  (:require [compojure.core :as compojure :refer [ANY DELETE GET POST PUT]]
             [compojure.route :as route]
+            [bottle.api.event-handler :as event-handler]
             [bottle.api.event-manager :as event-manager]
             [bottle.server.api.websocket :as websocket]
             [bottle.server.http :refer [with-body
@@ -10,10 +10,6 @@
                                       not-acceptable
                                       parsed-body
                                       unsupported-media-type]]))
-
-(s/def :bottle/event-id keyword?)
-(s/def :bottle/event-type keyword?)
-(s/def :bottle/event (s/keys :req [:bottle/event-type]))
 
 (defn handle-retrieving-events
   [{:keys [event-manager]} request]

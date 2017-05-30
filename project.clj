@@ -15,6 +15,7 @@
                  [byte-streams "0.2.2"]
                  [environ "1.1.0"]
                  [clamq/clamq-activemq "0.4"]
+                 [clamq/clamq-rabbitmq "0.4"]
 
                  ;; Logging
                  [com.taoensso/timbre "4.10.0"]

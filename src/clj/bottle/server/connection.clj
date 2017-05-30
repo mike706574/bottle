@@ -1,7 +1,7 @@
 (ns bottle.server.connection
   (:require [com.stuartsierra.component :as component]
             [manifold.stream :as s]
-            [bottle.server.util :as util]
+            [bottle.util :as util]
             [taoensso.timbre :as log]))
 
 (defprotocol ConnectionManager
@@ -26,6 +26,6 @@
           (s/close! (:conn entry)))))))
 
 (defn manager
-  []
+  [config]
   (component/using (map->AtomConnectionManager {:counter (atom 0)})
     [:connections]))

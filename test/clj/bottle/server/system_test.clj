@@ -5,7 +5,7 @@
             [manifold.stream :as s]
             [manifold.deferred :as d]
             [bottle.server.system :as system]
-            [bottle.server.message :refer [encode decode]]
+            [bottle.message :as message]
             [taoensso.timbre :as log]))
 
 (def config {:id "test" :port 10000})
@@ -21,10 +21,12 @@
          ~@body
          (finally (component/stop-system ~'system))))))
 
+(def content-type "application/transit+json")
+
 (defn receive!
   [conn]
   (let [out @(s/try-take! conn :drained 2000 :timeout)]
-    (if (contains? #{:drained :timeout} out) out (decode out))))
+    (if (contains? #{:drained :timeout} out) out (message/decode-string out))))
 
 (defn flush!
   [conn]
@@ -34,12 +36,12 @@
 
 (defn send!
   [conn message]
-  (s/put! conn (encode message)))
+  (s/put! conn (message/encode content-type message)))
 
 (defn parse
   [request]
   (if (contains? request :body)
-    (update request :body (comp decode slurp))
+    (update request :body (comp (partial message/decode-stream content-type)))
     request))
 
 ;; TODO: Handle errors
@@ -59,16 +61,16 @@
 (defn transit-get
   [url]
   (parse @(http/get url
-                    {:headers {"Content-Type" "application/transit+json"
-                               "Accept" "application/transit+json"}
+                    {:headers {"Content-Type" content-type
+                               "Accept" content-type}
                      :throw-exceptions false})))
 
 (defn transit-post
   [url body]
   (parse @(http/post url
-                     {:headers {"Content-Type" "application/transit+json"
-                                "Accept" "application/transit+json"}
-                      :body (encode body)
+                     {:headers {"Content-Type" content-type
+                                "Accept" content-type}
+                      :body (message/encode content-type body)
                       :throw-exceptions false})))
 
 (comment

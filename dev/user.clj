@@ -21,16 +21,23 @@
    [manifold.deferred :as d]
    [manifold.bus :as bus]
    [bottle.server.system :as system]
-   [bottle.server.message :as message]
+   [bottle.message :as message]
    [taoensso.timbre :as log]
    ;; Messaging
-))
+   [clamq.activemq :as amq]
+   [clamq.protocol.connection :as conn]
+   [clamq.protocol.consumer :as consumer]
+   [clamq.protocol.producer :as producer]))
 
 (log/set-level! :trace)
 
-(def config {:id "bottle-server"
-             :port 8001
-             :log-path "/tmp"})
+(def config {:bottle/id "bottle-server"
+             :bottle/port 8002
+             :bottle/log-path "/tmp"
+             :bottle/event-broker-type :active-mq
+             :bottle/event-broker-path "tcp://localhost:61616"
+             :bottle/event-content-type "application/transit+msgpack"
+             :bottle/event-endpoint "foo"})
 
 (defonce system nil)
 
@@ -83,7 +90,7 @@
 
 (comment
 
-  (def url "tcp://localhost:61616")
+
   (def cconn (amq/activemq-connection url))
   (def consumer (conn/consumer cconn {:endpoint "foo"
                                       :on-message (fn [message]
@@ -93,10 +100,8 @@
 
 
 
-  (def pconn (amq/activemq-connection url))
-  (def producer (conn/producer pconn))
-  (producer/publish producer "foo" "what")
-  producer
+
+
 
 
 

@@ -4,7 +4,7 @@
             [manifold.deferred :as d]
             [manifold.bus :as bus]
             [bottle.server.connection :as conn]
-            [bottle.server.message :refer [encode decode]]
+            [bottle.message :as message]
             [taoensso.timbre :as log]))
 
 (defn non-websocket-response
@@ -23,17 +23,16 @@
       (let [conn-id (conn/add! conn-manager :menu conn)
             conn-label (str "[ws-conn-" conn-id "] ")]
         (log/debug (str conn-label "Initial connection established."))
-        (d/let-flow [initial-message @(s/take! conn)]
-          (try
-            (s/connect-via
-             (bus/subscribe event-bus :all)
-             (fn [message]
-               (s/put! conn (encode message)))
-             conn)
-            {:status 101}
-            (catch Exception e
-              (log/error e (str conn-label "Exception thrown while connecting player. Initial message: " initial-message))
-              {:status 500})))))))
+        (try
+          (s/connect-via
+           (bus/subscribe event-bus :all)
+           (fn [message]
+             (s/put! conn (message/encode "application/transit+json" message)))
+           conn)
+          {:status 101}
+          (catch Exception e
+            (log/error e (str conn-label "Exception thrown while setting up connection."))
+            {:status 500}))))))
 
 (defn handler
   [deps]

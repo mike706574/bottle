@@ -48,10 +48,7 @@
       (already-stopped this))))
 
 (defn aleph-service
-  [{:keys [id port] :as config}]
-  {:pre [(string? id)
-         (integer? port)
-         (> port 0)]}
+  [{:keys [:bottle/id :bottle/port] :as config}]
   (component/using
-   (map->AlephService config)
-   [:handler-factory :conn-manager]))
+   (map->AlephService {:id id :port port})
+   [:conn-manager :handler-factory]))

@@ -1,8 +1,6 @@
 (ns bottle.server.http
-  (:require [cognitect.transit :as transit]
-            [clojure.edn :as edn]
-            [clojure.set :as set]
-            [clojure.spec.alpha :as spec]
+  (:require [bottle.message :as message]
+            [clojure.spec.alpha :as s]
             [taoensso.timbre :as log]))
 
 (def supported-media-types #{"application/edn"
@@ -33,62 +31,24 @@
     {:status 406
      :headers {"Consumes" supported-media-types }}))
 
-(defmulti parsed-body
-  (fn [request]
-    (get-in request [:headers "content-type"])))
-
-(defmethod parsed-body "application/edn"
+(defn parsed-body
   [request]
-  (try
-    (-> request :body slurp edn/read-string)
-    (catch Exception ex
-      (log/error ex "Failed to parse edn request body."))))
+  (let [content-type (get-in request [:headers "content-type"])]
+    (try
+      (message/decode-stream content-type (:body request))
+      (catch Exception ex
+        (log/error ex (str "Failed to decode " content-type " request body."))))))
 
-(defmethod parsed-body "application/transit+json"
-  [{body :body}]
-  (try
-    (transit/read (transit/reader body :json))
-    (catch Exception ex
-      (log/error ex "Failed to parse transit+json request body."))))
-
-(defmethod parsed-body "application/transit+msgpack"
-  [{body :body}]
-  (try
-    (transit/read (transit/reader body :msgpack))
-    (catch Exception ex
-      (log/error ex "Failed to parse transit+msgpack request body."))))
-
-(defmulti response-body
-  (fn [request body]
-    (get-in request [:headers "accept"])))
-
-(defmethod response-body "application/edn"
+(defn response-body "application/transit+msgpack"
   [request body]
-  (pr-str body))
-
-(defmethod response-body "application/transit+json"
-  [request body]
-  (try
-    (let [out (java.io.ByteArrayOutputStream.)]
-      (transit/write (transit/writer out :json) body)
-      (.toByteArray out))
-    (catch Exception ex
-      (throw (ex-info "Failed to write transit+json response body."
-                      {:request request
-                       :body body
-                       :exception ex})))))
-
-(defmethod response-body "application/transit+msgpack"
-  [request body]
-  (try
-    (let [out (java.io.ByteArrayOutputStream.)]
-      (transit/write (transit/writer out :msgpack) body)
-      (.toByteArray out))
-    (catch Exception ex
-      (throw (ex-info "Failed to write transit+msgpack response body."
-                      {:request request
-                       :body body
-                       :exception ex})))))
+  (let [content-type (get-in request [:headers "accept"])]
+    (try
+      (message/encode content-type body)
+      (catch Exception ex
+        (throw (ex-info (str "Failed to write " content-type " response body.")
+                        {:request request
+                         :body body
+                         :exception ex}))))))
 
 (defn body-response
   [status request body]
@@ -103,7 +63,7 @@
        (let [~body-sym (parsed-body ~request)]
          (if-not ~body-sym
            (body-response 400 ~request {:bottle.server/message "Invalid request body representation."})
-           (if-let [validation-failure# (spec/explain-data ~body-spec ~body-sym)]
+           (if-let [validation-failure# (s/explain-data ~body-spec ~body-sym)]
              (body-response 400 ~request {:bottle.server/message "Invalid request body."
                                           :bottle.server/data validation-failure#})
              ~@body)))))

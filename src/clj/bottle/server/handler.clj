@@ -19,6 +19,6 @@
           (throw (RuntimeException. "Please help me.")))))))
 
 (defn factory
-  []
+  [config]
   (component/using (map->MiloHandlerFactory {})
                    [:event-bus :event-manager :conn-manager]))
