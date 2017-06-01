@@ -24,10 +24,7 @@
    [bottle.message :as message]
    [taoensso.timbre :as log]
    ;; Messaging
-   [clamq.activemq :as amq]
-   [clamq.protocol.connection :as conn]
-   [clamq.protocol.consumer :as consumer]
-   [clamq.protocol.producer :as producer]))
+))
 
 (log/set-level! :trace)
 
@@ -84,25 +81,3 @@
   []
   (stop)
   (go))
-
-(defn connections [] @(:connections system))
-
-
-(comment
-
-
-  (def cconn (amq/activemq-connection url))
-  (def consumer (conn/consumer cconn {:endpoint "foo"
-                                      :on-message (fn [message]
-                                                    (println message))
-                                      :transacted true}))
-  (consumer/start consumer)
-
-
-
-
-
-
-
-
-  )

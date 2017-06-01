@@ -14,8 +14,8 @@
                  [manifold "0.1.6"]
                  [byte-streams "0.2.2"]
                  [environ "1.1.0"]
-                 [clamq/clamq-activemq "0.4"]
-                 [clamq/clamq-rabbitmq "0.4"]
+                 [com.rabbitmq/amqp-client "4.1.0"]
+                 [org.apache.activemq/activemq-core "5.7.0"]
 
                  ;; Logging
                  [com.taoensso/timbre "4.10.0"]
