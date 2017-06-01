@@ -16,6 +16,6 @@
 
 (defn connector
   [config]
-  (case (:bottle/event-broker-type config)
+  (case (:bottle/broker-type config)
     :active-mq amq/activemq-connection
     :rabbit-mq rmq/rabbitmq-connection))

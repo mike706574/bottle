@@ -8,12 +8,13 @@
             [taoensso.timbre :as log])
   (:import [bottle.messaging.handler MessageHandler]))
 
-(defrecord EventMessageHandler [manager content-type function]
+(defrecord EventMessageHandler [content-type manager function]
   MessageHandler
   (handle-message [this message]
     (when-let [decoded-message (try
                                  (message/decode content-type message)
                                  (catch Exception e
+                                   (.printStackTrace e)
                                    (log/debug (str "Failed to decode message:\n"
                                                    message))))]
       (try
@@ -32,6 +33,6 @@
 (defn event-handler
   [config]
   (component/using
-   (map->EventMessageHandler config)
+   (map->EventMessageHandler {:content-type (:bottle/event-content-type config)})
    {:manager :event-manager
     :function :event-function}))

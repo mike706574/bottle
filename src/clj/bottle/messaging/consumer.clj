@@ -27,10 +27,10 @@
     (dissoc this :conn :consumer)))
 
 (defn consumer
-  [{:keys [:bottle/event-broker-path :bottle/event-endpoint] :as config}]
+  [{:keys [:bottle/broker-path :bottle/endpoint] :as config}]
   (component/using
    (map->Consumer {:id (util/uuid)
-                   :broker-path event-broker-path
-                   :endpoint event-endpoint
+                   :broker-path broker-path
+                   :endpoint endpoint
                    :connector (connector/connector config) })
    {:handler :message-handler}))

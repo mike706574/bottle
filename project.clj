@@ -19,7 +19,6 @@
 
                  ;; Logging
                  [com.taoensso/timbre "4.10.0"]
-
                  ;; Web
                  [aleph "0.4.3"]
                  [ring/ring-anti-forgery "1.0.1"]

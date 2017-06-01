@@ -20,8 +20,8 @@
 
 (defmethod decode-stream :default
   [content-type body]
-  (throw (ex-info (str "Content type \"" content-type "\" is not supported."
-                       {:content-type content-type}))))
+  (throw (ex-info (str "Content type \"" content-type "\" is not supported.")
+                  {:content-type content-type})))
 
 (defn ^:private decode-string
   [content-type body]
@@ -61,6 +61,6 @@
 
 (defmethod encode :default
   [content-type body]
-  (throw (ex-info (str "Content type \"" content-type "\" is not supported."
-                       {:content-type content-type
-                        :body body}))))
+  (throw (ex-info (str "Content type \"" content-type "\" is not supported.")
+                  {:content-type content-type
+                   :body body})))
