@@ -1,6 +1,7 @@
 (ns bottle.messaging.rabbitmq-consumer-test
   (:require [bottle.macros :refer [with-system]]
             [bottle.messaging.consumer :as consumer]
+            [bottle.messaging.producer :as producer]
             [clojure.test :refer [deftest is]]
             [com.stuartsierra.component :as component]
             [manifold.stream :as s])
@@ -8,7 +9,7 @@
 
 (def broker-path "localhost")
 (def endpoint "event-consumer-test")
-(def config {:bottle/broker-type :active-mq
+(def config {:bottle/broker-type :rabbit-mq
              :bottle/broker-path broker-path
              :bottle/endpoint endpoint})
 
@@ -17,19 +18,13 @@
     {:messages messages
      :consumer (consumer/consumer config)
      :message-handler (reify MessageHandler
-                        (handle-message [_ message-bytes]
-                          (let [message (String. message-bytes "UTF-8")]
-                            (println "Message!!!" message)
-                            (s/put! messages message))))}))
+                        (handle-message [_ message]
+                          (println "Message!!!" message)
+                          (s/put! messages message)))}))
 
 (defn send-message
   [message]
-  (def conn (.newConnection (doto (com.rabbitmq.client.ConnectionFactory.)
-                              (.setHost broker-path))))
-  (def chan (.createChannel conn))
-  (.basicPublish chan "" endpoint nil (.getBytes message))
-  (.close chan)
-  (.close conn))
+  (producer/produce (producer/producer config) message))
 
 (deftest messages
   (with-system (system config)
