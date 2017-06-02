@@ -1,4 +1,4 @@
-(ns bottle.messaging.rabbitmq-consumer-test
+(ns bottle.messaging.activemq-test
   (:require [bottle.macros :refer [with-system]]
             [bottle.messaging.consumer :as consumer]
             [bottle.messaging.producer :as producer]
@@ -7,11 +7,11 @@
             [manifold.stream :as s])
   (:import [bottle.messaging.handler MessageHandler]))
 
-(def broker-path "localhost")
-(def endpoint "event-consumer-test")
-(def config {:bottle/broker-type :rabbit-mq
+(def broker-path "tcp://localhost:61616")
+(def queue-name "event-consumer-test")
+(def config {:bottle/broker-type :active-mq
              :bottle/broker-path broker-path
-             :bottle/endpoint endpoint})
+             :bottle/queue-name queue-name})
 
 (defn system [config]
   (let [messages (s/stream)]
@@ -19,7 +19,6 @@
      :consumer (consumer/consumer config)
      :message-handler (reify MessageHandler
                         (handle-message [_ message]
-                          (println "Message!!!" message)
                           (s/put! messages message)))}))
 
 (defn send-message
@@ -31,8 +30,8 @@
     (let [messages (:messages system)]
       (send-message "One!")
       (send-message "Two!")
-      (is (= "One!" @(s/try-take! messages :drained-1 100 :timeout-1)))
-      (is (= "Two!" @(s/try-take! messages :drained-2 100 :timeout-2))))))
+      (is (= "One!" @(s/try-take! messages :drained-1 500 :timeout-1)))
+      (is (= "Two!" @(s/try-take! messages :drained-2 500 :timeout-2))))))
 
 (deftest constructor
   (let [consumer (consumer/consumer config)]

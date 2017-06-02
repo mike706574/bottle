@@ -21,5 +21,5 @@
     (let [{:keys [event events event-handler]} system
           message (pr-str {:bottle/event-type :foo})]
       (handler/handle-message event-handler message)
-      (is (= {:bottle/event-type :foo :bottle/event-id 1} @event))
-      (is (= {1 {:bottle/event-type :foo :bottle/event-id 1}} @events)))))
+      (is (= {:bottle/event-type :foo :bottle/event-id "1"} @event))
+      (is (= {"1" {:bottle/event-type :foo :bottle/event-id "1"}} @events)))))

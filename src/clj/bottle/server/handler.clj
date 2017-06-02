@@ -21,4 +21,4 @@
 (defn factory
   [config]
   (component/using (map->MiloHandlerFactory {})
-                   [:event-bus :event-manager :conn-manager]))
+                   [:event-bus :event-manager :conn-manager :message-handler]))

@@ -1,13 +1,14 @@
 (ns bottle.server.api.handler
   (:require [bottle.server.api.routes :as api-routes]
+            [clojure.string :as str]
             [ring.middleware.defaults :refer [wrap-defaults
                                               api-defaults]]
             [taoensso.timbre :as log]))
 
 (defn wrap-logging
   [handler]
-  (fn [{:keys [uri method] :as request}]
-    (let [label (str method " \"" uri "\"")]
+  (fn [{:keys [uri request-method] :as request}]
+    (let [label (str (-> request-method name str/upper-case) " \"" uri "\"")]
       (try
         (log/debug label)
         (let [{:keys [status] :as response} (handler request)]

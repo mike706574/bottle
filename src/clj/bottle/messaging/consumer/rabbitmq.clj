@@ -24,10 +24,10 @@
     (dissoc this :conn :chan)))
 
 (defmethod consumer :rabbit-mq
-  [{:keys [:bottle/broker-path :bottle/endpoint] :as config}]
+  [{:keys [:bottle/broker-path :bottle/queue-name] :as config}]
   (component/using
    (map->RabbitMQConsumer
     {:id (util/uuid)
      :broker-path broker-path
-     :queue-name endpoint})
+     :queue-name queue-name})
    {:handler :message-handler}))

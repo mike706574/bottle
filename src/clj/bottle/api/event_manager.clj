@@ -15,8 +15,7 @@
     @events)
   (store [this data]
     (dosync
-     (let [id (alter counter inc)
-           _ (println data)
+     (let [id (str (alter counter inc))
            event (assoc data :bottle/event-id id)]
        (alter events assoc id event)
        event))))
