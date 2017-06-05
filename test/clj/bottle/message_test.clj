@@ -1,5 +1,7 @@
 (ns bottle.message-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest
+                                  is
+                                  testing]]
             [cognitect.transit :as transit]
             [bottle.message :as message]))
 
@@ -25,7 +27,7 @@
                           (java.io.ByteArrayInputStream. encoded-bytes) :msgpack))]
       (is (= {:foo "bar"} decoded-bytes)))))
 
-(deftest decoding
+(deftest decoding-strings
   (testing "application/edn"
     (is (= {:foo "bar"} (message/decode "application/edn" "{:foo \"bar\"}"))))
 
@@ -33,18 +35,61 @@
     (let [data {:foo "bar"}
           encoded-string (let [out (java.io.ByteArrayOutputStream.)]
                            (transit/write (transit/writer out :json) data)
-                           (.toByteArray out))]
+                           (.toString out))]
       (is (= {:foo "bar"}
              (message/decode
               "application/transit+json"
               encoded-string)))))
 
-  (testing "application/transit+msgpack"
+  (testing "application/transit+msgpack is unsupported"
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"Strings are not supported when using application/transit\+msgpack."
+         (message/decode
+          "application/transit+msgpack"
+          "{}")))))
+
+(deftest decoding-bytes
+  (testing "application/edn"
+    (is (= {:foo "bar"} (message/decode "application/edn" (.getBytes "{:foo \"bar\"}")))))
+
+  (testing "application/transit+json"
     (let [data {:foo "bar"}
-          encoded-string (let [out (java.io.ByteArrayOutputStream.)]
-                           (transit/write (transit/writer out :msgpack) data)
+          encoded-bytes (let [out (java.io.ByteArrayOutputStream.)]
+                           (transit/write (transit/writer out :json) data)
                            (.toByteArray out))]
       (is (= {:foo "bar"}
              (message/decode
+              "application/transit+json"
+              encoded-bytes)))))
+
+  (testing "application/transit+msgpack"
+    (let [data {:foo "bar"}
+          encoded-bytes (let [out (java.io.ByteArrayOutputStream.)]
+                          (transit/write (transit/writer out :msgpack) data)
+                          (.toByteArray out))]
+      (is (= {:foo "bar"}
+             (message/decode
               "application/transit+msgpack"
-              encoded-string))))))
+              encoded-bytes))))))
+
+(deftest decoding-unsupported-content-type
+  (testing "application/foo is unsupported"
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"Content type \"application/foo\" is not supported."
+         (message/decode "application/foo" (.getBytes "{:foo \"bar\"}"))))))
+
+(deftest encoding-unsupported-content-type
+  (testing "application/foo is unsupported"
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"Content type \"application/foo\" is not supported."
+         (message/encode "application/foo" {})))))
+
+(deftest unsupported-body-type
+  (testing "application/foo is unsupported"
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"Body type \"class java.lang.Long\" is not supported."
+         (message/decode "application/edn" 1)))))
