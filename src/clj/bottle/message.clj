@@ -35,11 +35,6 @@
   [content-type body]
   (decode-stream content-type ))
 
-(condp instance? "foo"
-  String "STRING"
-  "WHAT")
-(instance? String "foo")
-
 (def ^:private byte-array-type (type (byte-array [])))
 
 (defn decode
