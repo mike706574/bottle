@@ -13,10 +13,10 @@
 (def content-type "application/transit+json")
 
 (def config {:bottle/id "bottle-server"
-             :bottle/port 9000
+             :bottle/port 9001
              :bottle/log-path "/tmp"
              :bottle/event-content-type "application/transit+json"
-             :bottle/event-messaging {:bottle/broker-type :rabbit-mq
+             :bottle/event-messaging {:bottle/broker-type :active-mq
                                       :bottle/broker-path "localhost"
                                       :bottle/queue-name "bottle-1"}})
 
@@ -38,8 +38,6 @@
          ~'body (:body ~'response)
          ~'text (util/pretty ~'response)]
      ~@body))
-
-
 
 ;; ws client (unused)
 (defn receive!

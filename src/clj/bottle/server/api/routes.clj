@@ -32,8 +32,7 @@
   [{:keys [event-manager]} request]
   (handle-exceptions request
     (or (unsupported-media-type request)
-        (let [_ (println (:params request))
-              events (event-manager/events event-manager)
+        (let [events (event-manager/events event-manager)
               matches? (event-predicate (:params request))
               response (into {} (filter matches? events))]
           (body-response 200 request response)))))

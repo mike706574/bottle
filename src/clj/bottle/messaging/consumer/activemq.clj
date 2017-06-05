@@ -15,9 +15,11 @@
           dest (.createQueue session queue-name)
           listener (proxy [javax.jms.MessageListener] []
                      (onMessage [message-object]
-                       (let [message (.getText message-object)]
-                         (println "Handling message! " message)
-                         ((handler/handle-message handler message)))))
+                       (try
+                         (log/trace "Processing message.")
+                         (handler/handle-message handler (.getText message-object))
+                         (catch Exception e
+                             (log/error e (str "Exception thrown by message handler."))))))
           consumer (.createConsumer session dest)]
       (.setMessageListener consumer listener)
       (.start conn)

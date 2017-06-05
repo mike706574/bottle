@@ -67,7 +67,6 @@
         (throw (ex-info "Invalid configuration." config)))
     (let [{:keys [:bottle/id :bottle/event-messaging]} config]
       (log/info (str "Building " id "."))
-      (println event-messaging)
       (configure-logging! config)
       {:event-bus (bus/event-bus)
        :events (ref {})
