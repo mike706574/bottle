@@ -5,6 +5,28 @@
             [bottle.message :as message]
             [bottle.util :as util]))
 
+(def ^:private byte-array-type (type (byte-array [])))
+
+(def supported-content-type #{"application/edn"
+                              "application/transit+json"
+                              "application/transit+msgpack"})
+
+(def ^:private byte-array-type (type (byte-array [])))
+(def byte-array? (partial instance? byte-array-type))
+(def input-stream? (partial instance? java.io.InputStream))
+
+(s/fdef decode
+  :args (s/cat :content-type supported-content-type
+               :body (s/or :string string?
+                           :byte-array byte-array?
+                           :input-stream input-stream?))
+  :ret any?)
+
+(s/fdef encode
+  :args (s/cat :content-type supported-content-type
+               :body any?)
+  :ret byte-array?)
+
 (defmulti ^:private decode-stream
   "Encodes the string using the given content-type."
   (fn [content-type body] content-type))
@@ -34,8 +56,6 @@
 (defn ^:private decode-bytes
   [content-type body]
   (decode-stream content-type ))
-
-(def ^:private byte-array-type (type (byte-array [])))
 
 (defn decode
   [content-type body]

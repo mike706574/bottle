@@ -2,9 +2,11 @@
   (:require [clojure.test :refer [deftest
                                   is
                                   testing]]
+            [clojure.spec.test.alpha :as stest]
             [cognitect.transit :as transit]
             [bottle.message :as message]))
 
+(stest/instrument)
 (deftest encoding
   (testing "application/edn"
     (is (= "{:foo \"bar\"}" (String. (message/encode
@@ -73,23 +75,25 @@
               "application/transit+msgpack"
               encoded-bytes))))))
 
-(deftest decoding-unsupported-content-type
-  (testing "application/foo is unsupported"
+(deftest unsupported-args
+  (stest/unstrument)
+
+  (testing "decoding application/foo is unsupported"
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo
          #"Content type \"application/foo\" is not supported."
-         (message/decode "application/foo" (.getBytes "{:foo \"bar\"}"))))))
+         (message/decode "application/foo" (.getBytes "{:foo \"bar\"}")))))
 
-(deftest encoding-unsupported-content-type
-  (testing "application/foo is unsupported"
+  (testing "encoding application/foo is unsupported"
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo
          #"Content type \"application/foo\" is not supported."
-         (message/encode "application/foo" {})))))
+         (message/encode "application/foo" {}))))
 
-(deftest unsupported-body-type
   (testing "application/foo is unsupported"
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo
          #"Body type \"class java.lang.Long\" is not supported."
-         (message/decode "application/edn" 1)))))
+         (message/decode "application/edn" 1))))
+
+  (stest/instrument))
