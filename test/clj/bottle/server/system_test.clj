@@ -1,6 +1,6 @@
 (ns bottle.server.system-test
   (:require [aleph.http :as http]
-            [bottle.util :as util]
+            [bottle.util :as util :refer [map-vals]]
             [com.stuartsierra.component :as component]
             [clojure.test :refer [deftest testing is]]
             [manifold.bus :as bus]
@@ -17,7 +17,7 @@
              :bottle/log-path "/tmp"
              :bottle/event-content-type "application/transit+json"
              :bottle/event-messaging {:bottle/broker-type :active-mq
-                                      :bottle/broker-path "localhost"
+                                      :bottle/broker-path "tcp://localhost.qg.com:61616"
                                       :bottle/queue-name "bottle-1"}})
 
 (defmacro with-system
@@ -99,6 +99,10 @@
   [http-url event]
   (transit-post (str http-url "/api/events") event))
 
+(defn purge [event]
+  (dissoc event :bottle/event-id))
+
+;;(create-event "http://localhost:8001" {:bottle/event-type :foo :count 4})
 ;; test
 (deftest creating-and-querying-events
   (with-system
@@ -106,15 +110,9 @@
           last-event (atom nil)
           last-foo (atom nil)
           last-bar (atom nil)
-          foo-1 {:bottle/event-type :foo
-                 :bottle/event-id "1"
-                 :count 4}
-          bar-2 {:bottle/event-type :bar
-                 :bottle/event-id "2"
-                 :name "Bob"}
-          foo-3 {:bottle/event-type :foo
-                 :bottle/event-id "3"
-                 :count 15}]
+          foo-1 {:bottle/event-type :foo :count 4}
+          bar-2 {:bottle/event-type :bar :name "Bob"}
+          foo-3 {:bottle/event-type :foo :count 15}]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
       (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
@@ -123,56 +121,56 @@
       ;; query
       (unpack-response (get-events http-url)
         (is (= 200 status))
-        (is (= {} body)))
+        (is (= {} (map-vals purge body))))
 
       ;; create
       (unpack-response (create-event http-url {:bottle/event-type :foo :count 4})
         (is (= 201 status))
-        (is (= foo-1 body) text))
+        (is (= foo-1 (purge body))))
 
       ;; bus
-      (is (= foo-1 @last-event))
-      (is (= foo-1 @last-foo))
+      (is (= foo-1 (purge @last-event)))
+      (is (= foo-1 (purge @last-foo)))
       (is (nil? @last-bar))
 
       ;; query
       (unpack-response (get-events http-url)
         (is (= 200 status))
-        (is (= {"1" foo-1} body)))
+        (is (= {"1" foo-1} (map-vals purge body))))
       (unpack-response (get-events-by-type http-url :bar)
         (is (= 200 status))
         (is (= {} body)))
       (unpack-response (get-events-by-type http-url :foo)
         (is (= 200 status))
-        (is (= {"1" foo-1} body)))
+        (is (= {"1" foo-1} (map-vals purge body))))
 
       ;; create
       (unpack-response (create-event http-url {:bottle/event-type :bar :name "Bob"})
         (is (= 201 status))
-        (is (= bar-2 body) text))
+        (is (= bar-2 (purge body))))
 
       ;; bus
-      (is (= bar-2 @last-event))
-      (is (= foo-1 @last-foo))
-      (is (= bar-2 @last-bar))
+      (is (= bar-2 (purge @last-event)))
+      (is (= foo-1 (purge @last-foo)))
+      (is (= bar-2 (purge @last-bar)))
 
       ;; create
       (unpack-response (create-event http-url {:bottle/event-type :foo :count 15})
         (is (= 201 status))
-        (is (= foo-3 body) text))
+        (is (= foo-3 (purge body))))
 
       ;; bus
-      (is (= foo-3 @last-event))
-      (is (= foo-3 @last-foo))
-      (is (= bar-2 @last-bar))
+      (is (= foo-3 (purge @last-event)))
+      (is (= foo-3 (purge @last-foo)))
+      (is (= bar-2 (purge @last-bar)))
 
       ;; query
       (unpack-response (get-events http-url)
         (is (= 200 status))
-        (is (= {"1" foo-1  "2" bar-2 "3" foo-3} body)))
+        (is (= {"1" foo-1  "2" bar-2 "3" foo-3} (map-vals purge body))))
       (unpack-response (get-events-by-type http-url :bar)
         (is (= 200 status))
-        (is (= {"2" bar-2} body)))
+        (is (= {"2" bar-2} (map-vals purge body))))
       (unpack-response (get-events-by-type http-url :foo)
         (is (= 200 status))
-        (is (= {"1" foo-1 "3" foo-3} body))))))
+        (is (= {"1" foo-1 "3" foo-3} (map-vals purge body)))))))

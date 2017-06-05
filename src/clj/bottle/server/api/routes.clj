@@ -40,12 +40,13 @@
 (defn handle-creating-event
   [{:keys [event-handler]} request]
   (handle-exceptions request
-    (with-body [event :bottle/event request]
+    (if-let [event (parsed-body request)]
       (let [{:keys [status event validation-failure]} (handler/handle-event event-handler event)]
         (case status
           :ok (body-response 201 request event)
           :invalid (body-response 400 request validation-failure)
-          (body-response 500 request {:bottle.server/message "An error occurred."}))))))
+          (body-response 500 request {:bottle.server/message "An error occurred."})))
+      {:bottle.server/message "Invalid request body representation."})))
 
 (defn routes
   [deps]

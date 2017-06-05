@@ -1,11 +1,7 @@
 (ns bottle.message
   (:require [clojure.edn :as edn]
             [clojure.spec.alpha :as s]
-            [cognitect.transit :as transit]
-            [bottle.message :as message]
-            [bottle.util :as util]))
-
-(def ^:private byte-array-type (type (byte-array [])))
+            [cognitect.transit :as transit]))
 
 (def supported-content-type #{"application/edn"
                               "application/transit+json"

@@ -2,7 +2,6 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [aleph.http :as aleph-http]
-
             [bottle.server.connection :as conn]
             [bottle.server.handler :as handler])
   (:gen-class :main true))

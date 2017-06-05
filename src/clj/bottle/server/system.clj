@@ -7,6 +7,12 @@
             [bottle.server.connection :as conn]
             [bottle.server.handler :as server-handler]
             [bottle.message :as message]
+
+            [bottle.messaging.consumer.activemq]
+            [bottle.messaging.consumer.rabbitmq]
+            [bottle.messaging.producer.activemq]
+            [bottle.messaging.producer.rabbitmq]
+
             [bottle.server.service :as service]
             [bottle.util :as util]
             [clojure.spec.alpha :as s]
@@ -86,4 +92,4 @@
        :connections (atom {})
        :conn-manager (conn/manager config)
        :handler-factory (server-handler/factory config)
-       :app (service/aleph-service config)})))
+       :app (component/using (service/aleph-service config) [:event-consumer])})))

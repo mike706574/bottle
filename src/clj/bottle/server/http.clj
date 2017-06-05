@@ -66,7 +66,7 @@
            (if-let [validation-failure# (s/explain-data ~body-spec ~body-sym)]
              (body-response 400 ~request {:bottle.server/message "Invalid request body."
                                           :bottle.server/data validation-failure#})
-             ~@body)))))
+             (do ~@body))))))
 
 (defmacro handle-exceptions
   [request & body]

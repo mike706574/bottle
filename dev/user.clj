@@ -27,8 +27,8 @@
 
 (log/set-level! :trace)
 
-(def messaging-config {:bottle/broker-type :rabbit-mq
-                       :bottle/broker-path "localhost"
+(def messaging-config {:bottle/broker-type :active-mq
+                       :bottle/broker-path "tcp://localhost:61616"
                        :bottle/queue-name "bottle-1"
                        :bottle/handler :event-message-handler})
 
