@@ -14,7 +14,11 @@
           chan (.createChannel conn)
           consumer (proxy [com.rabbitmq.client.DefaultConsumer] [chan]
                      (handleDelivery [consumer-tag envelope props body]
-                       (handler/handle-message handler (String. body "UTF-8"))))]
+                       (try
+                         (log/trace "Processing message.")
+                         (handler/handle-message handler body)
+                         (catch Exception e
+                           (log/error e (str "Exception thrown by message handler."))))))]
       (.basicConsume chan queue-name true consumer)
       (assoc this :conn conn :chan chan)))
   (stop [this]
@@ -25,9 +29,7 @@
 
 (defmethod consumer :rabbit-mq
   [{:keys [:bottle/broker-path :bottle/queue-name] :as config}]
-  (component/using
-   (map->RabbitMQConsumer
-    {:id (util/uuid)
-     :broker-path broker-path
-     :queue-name queue-name})
-   {:handler :message-handler}))
+  (map->RabbitMQConsumer
+   {:id (util/uuid)
+    :broker-path broker-path
+    :queue-name queue-name}))

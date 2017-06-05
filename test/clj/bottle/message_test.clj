@@ -5,9 +5,9 @@
 
 (deftest encoding
   (testing "application/edn"
-    (is (= "{:foo \"bar\"}" (message/encode
-                             "application/edn"
-                             {:foo "bar"}))))
+    (is (= "{:foo \"bar\"}" (String. (message/encode
+                                      "application/edn"
+                                      {:foo "bar"})))))
 
   (testing "application/transit+json"
     (let [data {:foo "bar"}

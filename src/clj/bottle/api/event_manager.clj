@@ -17,6 +17,7 @@
     (dosync
      (let [id (str (alter counter inc))
            event (assoc data :bottle/event-id id)]
+       (log/debug (str "Storing event " event "."))
        (alter events assoc id event)
        event))))
 

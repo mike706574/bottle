@@ -22,17 +22,29 @@
    [manifold.bus :as bus]
    [bottle.server.system :as system]
    [bottle.message :as message]
+   [bottle.messaging.producer :as producer]
    [taoensso.timbre :as log]))
 
 (log/set-level! :trace)
 
+(def messaging-config {:bottle/broker-type :rabbit-mq
+                       :bottle/broker-path "localhost"
+                       :bottle/queue-name "bottle-1"
+                       :bottle/handler :event-message-handler})
+
+(def content-type "application/edn")
+
 (def config {:bottle/id "bottle-server"
              :bottle/port 8001
              :bottle/log-path "/tmp"
-             :bottle/event-content-type "application/edn"
-             :bottle/event-messaging {:bottle/broker-type :rabbit-mq
-                                      :bottle/broker-path "localhost"
-                                      :bottle/queue-name "bottle-1"}})
+             :bottle/event-content-type content-type
+             :bottle/event-messaging messaging-config})
+
+(defn send-message
+  [message]
+  (producer/produce
+   (producer/producer (:bottle/event-messaging config))
+   (String. (message/encode content-type message))))
 
 (defonce system nil)
 

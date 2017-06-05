@@ -45,7 +45,7 @@
 
 (defmethod encode "application/edn"
   [_ body]
-  (pr-str body))
+  (.getBytes (pr-str body)))
 
 (defmethod encode "application/transit+json"
   [_ body]

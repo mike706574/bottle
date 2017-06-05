@@ -1,13 +1,16 @@
 (ns bottle.server.system
   (:require [bottle.messaging.consumer :as consumer]
             [bottle.api.event-handler :as event-handler]
+            [bottle.api.notification :as notification]
             [bottle.api.event-manager :as event-manager]
+            [bottle.api.message-handler :as message-handler]
             [bottle.server.connection :as conn]
             [bottle.server.handler :as server-handler]
             [bottle.message :as message]
             [bottle.server.service :as service]
             [bottle.util :as util]
             [clojure.spec.alpha :as s]
+            [com.stuartsierra.component :as component]
             [manifold.bus :as bus]
             [taoensso.timbre :as log]
             [taoensso.timbre.appenders.core :as appenders]))
@@ -23,29 +26,25 @@
 (s/def :bottle/broker-type keyword?)
 (s/def :bottle/broker-path string?)
 (s/def :bottle/queue-name string?)
-
+(s/def :bottle/messaging-config (s/keys :req [:bottle/broker-type
+                                              :bottle/broker-path
+                                              :bottle/queue-name]))
 ;; event
-(s/def :bottle/event-id keyword?)
+(s/def :bottle/event-id string?)
+(contains? {:bottle/event-type :foo, :bottle/event-id "1", :count 4} [:bottle/event-id])
 (s/def :bottle/event-type keyword?)
 (s/def :bottle/event-template (s/and (s/keys :req [:bottle/event-type])
-                                     #(not (contains? % [:bottle/event-id :bottle/event-time]))))
+                                     #(not (contains? % :bottle/event-id))))
 (s/def :bottle/event (s/keys :req [:bottle/event-id
                                    :bottle/event-type
                                    :bottle/event-date]))
-
-;; event
-(s/def :bottle/event-id keyword?)
-(s/def :bottle/event-type keyword?)
-(s/def :bottle/event (s/keys :req [:bottle/event-type]))
 
 ;; app
 (s/def :bottle/id string?)
 (s/def :bottle/port integer?)
 (s/def :bottle/log-path string?)
 (s/def :bottle/event-content-type string?)
-(s/def :bottle/event-messaging (s/keys :req [:bottle/broker-type
-                                             :bottle/broker-path
-                                             :bottle/queue-name]))
+(s/def :bottle/event-messaging :bottle/messaging-config)
 
 (s/def :bottle/config (s/keys :req [:bottle/id
                                     :bottle/port
@@ -55,8 +54,8 @@
 
 (defn process-event
   [event]
-  (println "Event:")
-  (clojure.pprint/pprint event))
+  (log/info (str "Processing event:\n" (util/pretty event)))
+  event)
 
 (defn system
   [config]
@@ -72,10 +71,19 @@
       (configure-logging! config)
       {:event-bus (bus/event-bus)
        :events (ref {})
-       :message-handler (event-handler/event-handler config)
-       :event-consumer (consumer/consumer event-messaging)
+
+       ;; Event processing
        :event-function process-event
        :event-manager (event-manager/event-manager config)
+       :event-handler (event-handler/event-handler config)
+
+       ;; Messaging
+       :event-message-handler (message-handler/event-message-handler config)
+       :event-consumer (component/using
+                        (consumer/consumer event-messaging)
+                        {:handler :event-message-handler})
+
+       ;; HTTP
        :connections (atom {})
        :conn-manager (conn/manager config)
        :handler-factory (server-handler/factory config)

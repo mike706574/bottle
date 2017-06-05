@@ -1,5 +1,5 @@
 (ns bottle.server.api.routes
-  (:require [bottle.messaging.handler :as handler]
+  (:require [bottle.api.event-handler :as handler]
             [bottle.api.event-manager :as event-manager]
             [bottle.server.api.websocket :as websocket]
             [bottle.server.http :refer [with-body
@@ -39,10 +39,10 @@
           (body-response 200 request response)))))
 
 (defn handle-creating-event
-  [{:keys [message-handler]} request]
+  [{:keys [event-handler]} request]
   (handle-exceptions request
     (with-body [event :bottle/event request]
-      (let [{:keys [status event validation-failure]} (handler/handle-message message-handler event)]
+      (let [{:keys [status event validation-failure]} (handler/handle-event event-handler event)]
         (case status
           :ok (body-response 201 request event)
           :invalid (body-response 400 request validation-failure)

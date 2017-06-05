@@ -31,9 +31,7 @@
 
 (defmethod consumer :active-mq
   [{:keys [:bottle/broker-path :bottle/queue-name] :as config}]
-  (component/using
-   (map->ActiveMQConsumer
-    {:id (util/uuid)
-     :broker-path broker-path
-     :queue-name queue-name})
-   {:handler :message-handler}))
+  (map->ActiveMQConsumer
+   {:id (util/uuid)
+    :broker-path broker-path
+    :queue-name queue-name}))

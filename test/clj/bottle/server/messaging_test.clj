@@ -1,5 +1,6 @@
-(ns bottle.server.system-test
+(ns bottle.server.messaging-test
   (:require [aleph.http :as http]
+            [bottle.messaging.producer :as producer]
             [bottle.util :as util]
             [com.stuartsierra.component :as component]
             [clojure.test :refer [deftest testing is]]
@@ -12,13 +13,23 @@
 
 (def content-type "application/transit+json")
 
+(def messaging-config {:bottle/broker-type :rabbit-mq
+                       :bottle/broker-path "localhost"
+                       :bottle/queue-name "bottle-messaging-test"})
+
 (def config {:bottle/id "bottle-server"
-             :bottle/port 9000
+             :bottle/port 9003
              :bottle/log-path "/tmp"
-             :bottle/event-content-type "application/transit+json"
-             :bottle/event-messaging {:bottle/broker-type :rabbit-mq
-                                      :bottle/broker-path "localhost"
-                                      :bottle/queue-name "bottle-1"}})
+             :bottle/event-content-type content-type
+             :bottle/event-messaging messaging-config})
+
+(defn send-message
+  [message]
+  (producer/produce
+   (producer/producer messaging-config)
+   (String. (message/encode content-type message))))
+
+(message/encode "application/transit+msgpack" "foo")
 
 (defmacro with-system
   [& body]
@@ -29,7 +40,8 @@
            ~'http-url (str "http://localhost:" ~port)]
        (try
          ~@body
-         (finally (component/stop-system ~'system))))))
+         (finally
+           (component/stop-system ~'system))))))
 
 (defmacro unpack-response
   [call & body]
@@ -38,8 +50,6 @@
          ~'body (:body ~'response)
          ~'text (util/pretty ~'response)]
      ~@body))
-
-
 
 ;; ws client (unused)
 (defn receive!
@@ -107,74 +117,24 @@
     (let [bus (:event-bus system)
           last-event (atom nil)
           last-foo (atom nil)
-          last-bar (atom nil)
           foo-1 {:bottle/event-type :foo
                  :bottle/event-id "1"
-                 :count 4}
-          bar-2 {:bottle/event-type :bar
-                 :bottle/event-id "2"
-                 :name "Bob"}
-          foo-3 {:bottle/event-type :foo
-                 :bottle/event-id "3"
-                 :count 15}]
+                 :count 4}]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
       (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
-      (s/consume #(reset! last-bar %) (bus/subscribe bus :bar))
 
       ;; query
       (unpack-response (get-events http-url)
         (is (= 200 status))
         (is (= {} body)))
 
-      ;; create
-      (unpack-response (create-event http-url {:bottle/event-type :foo :count 4})
-        (is (= 201 status))
-        (is (= foo-1 body) text))
+      (send-message {:bottle/event-type :foo
+                     :count 4})
 
-      ;; bus
-      (is (= foo-1 @last-event))
-      (is (= foo-1 @last-foo))
-      (is (nil? @last-bar))
+      (Thread/sleep 100)
 
       ;; query
       (unpack-response (get-events http-url)
         (is (= 200 status))
-        (is (= {"1" foo-1} body)))
-      (unpack-response (get-events-by-type http-url :bar)
-        (is (= 200 status))
-        (is (= {} body)))
-      (unpack-response (get-events-by-type http-url :foo)
-        (is (= 200 status))
-        (is (= {"1" foo-1} body)))
-
-      ;; create
-      (unpack-response (create-event http-url {:bottle/event-type :bar :name "Bob"})
-        (is (= 201 status))
-        (is (= bar-2 body) text))
-
-      ;; bus
-      (is (= bar-2 @last-event))
-      (is (= foo-1 @last-foo))
-      (is (= bar-2 @last-bar))
-
-      ;; create
-      (unpack-response (create-event http-url {:bottle/event-type :foo :count 15})
-        (is (= 201 status))
-        (is (= foo-3 body) text))
-
-      ;; bus
-      (is (= foo-3 @last-event))
-      (is (= foo-3 @last-foo))
-      (is (= bar-2 @last-bar))
-
-      ;; query
-      (unpack-response (get-events http-url)
-        (is (= 200 status))
-        (is (= {"1" foo-1  "2" bar-2 "3" foo-3} body)))
-      (unpack-response (get-events-by-type http-url :bar)
-        (is (= 200 status))
-        (is (= {"2" bar-2} body)))
-      (unpack-response (get-events-by-type http-url :foo)
-        (is (= 200 status))
-        (is (= {"1" foo-1 "3" foo-3} body))))))
+        (is (= {"1" foo-1} body))))))

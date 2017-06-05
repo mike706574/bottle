@@ -8,7 +8,9 @@
     (with-open [conn (.newConnection (doto (com.rabbitmq.client.ConnectionFactory.)
                                        (.setHost broker-path)))
                 chan (.createChannel conn)]
-      (.basicPublish chan "" queue-name nil (.getBytes message)))))
+      (.basicPublish chan "" queue-name nil (if (string? message)
+                                              (.getBytes message)
+                                              message)))))
 
 (defmethod producer :rabbit-mq
   [{:keys [:bottle/broker-path :bottle/queue-name]}]
