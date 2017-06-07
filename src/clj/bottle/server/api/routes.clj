@@ -57,4 +57,6 @@
         (handle-retrieving-events deps request))
    (POST "/api/events" request
          (handle-creating-event deps request))
+   (GET "/api/websocket" request (websocket/handler deps))
+   (GET "/api/websocket/:event-type" request (websocket/handler deps))
    (route/not-found {:status 200})))

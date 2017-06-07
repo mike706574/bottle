@@ -2,7 +2,6 @@
   "Tools for interactive development with the REPL. This file should
   not be included in a production build of the application."
   (:require
-   [aleph.http :as http]
    [clojure.data.json :as json]
    [clojure.edn :as edn]
    [clojure.java.io :as io]
@@ -17,9 +16,13 @@
    [clojure.walk :as walk]
    [cognitect.transit :as transit]
    [com.stuartsierra.component :as component]
+
+   [aleph.http :as http]
    [manifold.stream :as s]
    [manifold.deferred :as d]
    [manifold.bus :as bus]
+
+   [bottle.client :as client]
    [bottle.server.system :as system]
    [bottle.message :as message]
    [bottle.messaging.producer :as producer]
@@ -28,25 +31,23 @@
 (log/set-level! :trace)
 
 (def messaging-config {:bottle/broker-type :active-mq
-                       :bottle/broker-path "tcp://localhost:61616"
+                       :bottle/broker-path "tcp://qdsdevamq:61616"
                        :bottle/queue-name "bottle-1"
                        :bottle/handler :event-message-handler})
 
-(def content-type "application/edn")
+(def port 8001)
+(def content-type "application/transit+json")
 
 (def config {:bottle/id "bottle-server"
-             :bottle/port 8001
+             :bottle/port port
              :bottle/log-path "/tmp"
              :bottle/event-content-type content-type
              :bottle/event-messaging messaging-config})
 
-(defn send-message
-  [message]
-  (producer/produce
-   (producer/producer (:bottle/event-messaging config))
-   (String. (message/encode content-type message))))
-
 (defonce system nil)
+
+(def url (str "ws://localhost:" port "/api/websocket"))
+(def ws-url (str "ws://localhost:" port "/api/websocket"))
 
 (defn init
   "Creates and initializes the system under development in the Var

@@ -7,7 +7,8 @@
   "Builds a request handler."
   (handler [this]))
 
-(defrecord MiloHandlerFactory [event-bus
+(defrecord MiloHandlerFactory [event-content-type
+                               event-bus
                                event-manager
                                conn-manager]
   HandlerFactory
@@ -21,5 +22,5 @@
 (defn factory
   [config]
   (component/using
-   (map->MiloHandlerFactory {})
+   (map->MiloHandlerFactory {:event-content-type (:event-content-type config)})
    [:event-bus :event-manager :conn-manager :event-handler]))
