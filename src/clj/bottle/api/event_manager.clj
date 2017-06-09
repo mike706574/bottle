@@ -17,8 +17,9 @@
     (dosync
      (let [id (str (alter counter inc))
            event (assoc data
-                        :bottle/event-id id
-                        :bottle/event-time (java.util.Date.))]
+                        :bottle/id id
+                        :bottle/time (java.util.Date.)
+                        :bottle/closed? false)]
        (log/debug (str "Storing event " event "."))
        (alter events assoc id event)
        event))))

@@ -8,18 +8,16 @@
                                         not-acceptable
                                         parsed-body
                                         unsupported-media-type]]
-            [compojure.core :as compojure :refer [ANY DELETE GET POST PUT]]
+            [compojure.core :as compojure :refer [ANY DELETE GET PATCH POST PUT]]
             [compojure.route :as route]
             [taoensso.timbre :as log]))
 
 (defmulti event-clause key)
 
-(defmethod event-clause :type type-clause
-  [[_ event-type]]
+(defmethod event-clause :category category-clause
+  [[_ category]]
   (fn [[_ event]]
-    (log/info (keyword event-type))
-    (log/info (:bottle/event-type event))
-    (log/spy :info (= (keyword event-type) (:bottle/event-type event)))))
+    (= (keyword category) (:bottle/category event))))
 
 (defmethod event-clause :default unsupported-param [_] nil)
 
@@ -48,15 +46,22 @@
           (body-response 500 request {:bottle.server/message "An error occurred."})))
       {:bottle.server/message "Invalid request body representation."})))
 
+(defn handle-modifying-event
+  [request]
+  (with-body [change :bottle/change request]
+    nil))
+
 (defn routes
   [deps]
   (compojure/routes
    (GET "/api/events" request
         (handle-retrieving-events deps request))
-   (GET "/api/events/:type" request
+   (GET "/api/events/:category" request
         (handle-retrieving-events deps request))
    (POST "/api/events" request
          (handle-creating-event deps request))
+   (PATCH "/api/events/:id" request
+          (handle-modifying-event deps request))
    (GET "/api/websocket" request (websocket/handler deps))
-   (GET "/api/websocket/:event-type" request (websocket/handler deps))
+   (GET "/api/websocket/:category" request (websocket/handler deps))
    (route/not-found {:status 200})))

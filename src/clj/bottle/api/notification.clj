@@ -20,7 +20,7 @@
   (handle-message [this message]
     (when-let [event (decode-message content-type message)]
       (bus/publish! bus :all event)
-      (bus/publish! bus (:bottle/event-type event) event))))
+      (bus/publish! bus (:bottle/category event) event))))
 
 (defn message-handler
   [{content-type :bottle/event-content-type}]

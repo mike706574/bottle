@@ -22,5 +22,5 @@
 (defn factory
   [config]
   (component/using
-   (map->MiloHandlerFactory {:event-content-type (:event-content-type config)})
+   (map->MiloHandlerFactory {:event-content-type (:bottle/event-content-type config)})
    [:event-bus :event-manager :conn-manager :event-handler]))

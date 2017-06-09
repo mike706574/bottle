@@ -8,7 +8,7 @@
 
 (defprotocol EventHandler
   "Handles events."
-  (handle-event [this event] "Handles the given event.."))
+  (handle-event [this event] "Handles the given event."))
 
 (defrecord BasicEventHandler [manager bus function]
   EventHandler
@@ -28,7 +28,7 @@
           (log/trace (str "Publishing event:\n"
                           (util/pretty event)))
           (bus/publish! bus :all event)
-          (bus/publish! bus (:bottle/event-type event) event)
+          (bus/publish! bus (:bottle/category event) event)
           {:status :ok :event event}))
       (catch Exception e
         (log/error e (str "Exception thrown while processing event:\n"

@@ -30,8 +30,8 @@
 
 (log/set-level! :trace)
 
-(def messaging-config {:bottle/broker-type :active-mq
-                       :bottle/broker-path "tcp://qdsdevamq:61616"
+(def messaging-config {:bottle/broker-type :rabbit-mq
+                       :bottle/broker-path "localhost"
                        :bottle/queue-name "bottle-1"
                        :bottle/handler :event-message-handler})
 
@@ -46,7 +46,7 @@
 
 (defonce system nil)
 
-(def url (str "ws://localhost:" port "/api/websocket"))
+(def url (str "http://localhost:" port))
 (def ws-url (str "ws://localhost:" port "/api/websocket"))
 
 (defn init

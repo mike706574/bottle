@@ -1,5 +1,6 @@
 (ns bottle.server.messaging-test
   (:require [aleph.http :as http]
+            [bottle.client :as client]
             [bottle.messaging.producer :as producer]
             [bottle.util :as util]
             [com.stuartsierra.component :as component]
@@ -51,90 +52,41 @@
          ~'text (util/pretty ~'response)]
      ~@body))
 
-;; ws client (unused)
-(defn receive!
-  [conn]
-  (let [out @(s/try-take! conn :drained 2000 :timeout)]
-    (if (contains? #{:drained :timeout} out) out (message/decode content-type out))))
-
-(defn flush!
-  [conn]
-  (loop [out :continue]
-    (when (not= out :timeout)
-      (recur @(s/try-take! conn :drained 10 :timeout)))))
-
-(defn send!
-  [conn message]
-  (s/put! conn (message/encode content-type message)))
-
-(defn parse
-  [request]
-  (if (contains? request :body)
-    (update request :body (comp (partial message/decode content-type)))
-    request))
-
-(defn connect!
-  [ws-url]
-  (let [conn @(http/websocket-client ws-url)]
-    (is (not= :timeout (receive! conn)))
-    conn))
-
-;; http client
-(defn transit-get
-  [url]
-  (parse @(http/get url
-                    {:headers {"Content-Type" content-type
-                               "Accept" content-type}
-                     :throw-exceptions false})))
-
-(defn transit-post
-  [url body]
-  (parse @(http/post url
-                     {:headers {"Content-Type" content-type
-                                "Accept" content-type}
-                      :body (message/encode content-type body)
-                      :throw-exceptions false})))
-
-(defn get-events
-  [http-url]
-  (transit-get (str http-url "/api/events")))
-
-(defn get-events-by-type
-  [http-url event-type]
-  (parse @(http/get (str http-url "/api/events")
-                    {:headers {"Content-Type" content-type
-                               "Accept" content-type}
-                     :query-params {"type" (name event-type)}
-                     :throw-exceptions false})))
-
-(defn create-event
-  [http-url event]
-  (transit-post (str http-url "/api/events") event))
-
-;; test
 (deftest creating-and-querying-events
   (with-system
     (let [bus (:event-bus system)
           last-event (atom nil)
           last-foo (atom nil)
-          foo-1 {:bottle/event-type :foo
-                 :bottle/event-id "1"
+          foo-1 {:bottle/category :foo
+                 :bottle/id "1"
                  :count 4}]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
       (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
 
       ;; query
-      (unpack-response (get-events http-url)
+      (unpack-response (client/get-events http-url)
         (is (= 200 status))
         (is (= {} body)))
 
-      (send-message {:bottle/event-type :foo
+      (send-message {:bottle/category :foo
                      :count 4})
 
       (Thread/sleep 100)
 
       ;; query
-      (unpack-response (get-events http-url)
+      (unpack-response (client/get-events http-url)
         (is (= 200 status))
-        (is (= {"1" foo-1} body))))))
+        (is (= ["1"] (keys body)))
+        (let [event (get body "1")]
+          (is (= #{:bottle/id
+                   :bottle/category
+                   :bottle/time
+                   :bottle/closed?
+                   :count}
+                 (set (keys event))))
+          (is (string? (:bottle/id event)))
+          (is (not (:bottle/closed? event)))
+          (is (instance? java.util.Date (:bottle/time event)))
+          (is (= :foo (:bottle/category event)))
+          (is (= 4 (:count event))))))))

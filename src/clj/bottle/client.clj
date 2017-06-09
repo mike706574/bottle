@@ -6,9 +6,11 @@
 (def content-type "application/transit+json")
 
 (defn receive!
-  [conn]
-  (let [out @(s/try-take! conn :drained 2000 :timeout)]
-    (if (contains? #{:drained :timeout} out) out (message/decode content-type out))))
+  ([conn]
+   (receive! conn 100))
+  ([conn timeout]
+   (let [out @(s/try-take! conn :drained timeout :timeout)]
+     (if (contains? #{:drained :timeout} out) out (message/decode content-type out)))))
 
 (defn flush!
   [conn]
@@ -29,9 +31,9 @@
 (defn connect!
   ([ws-url]
    (connect! ws-url nil))
-  ([ws-url event-type]
-   (let [url (if event-type
-               (str ws-url "/" (name event-type))
+  ([ws-url category]
+   (let [url (if category
+               (str ws-url "/" (name category))
                ws-url)
          conn @(http/websocket-client url)]
      conn)))
@@ -56,12 +58,12 @@
   [http-url]
   (transit-get (str http-url "/api/events")))
 
-(defn get-events-by-type
-  [http-url event-type]
+(defn get-events-by-category
+  [http-url category]
   (parse @(http/get (str http-url "/api/events")
                     {:headers {"Content-Type" content-type
                                "Accept" content-type}
-                     :query-params {"type" (name event-type)}
+                     :query-params {"category" (name category)}
                      :throw-exceptions false})))
 
 (defn create-event

@@ -19,7 +19,7 @@
 (deftest messages
   (with-system (system config)
     (let [{:keys [event events event-handler]} system
-          message (pr-str {:bottle/event-type :foo})]
+          message (pr-str {:bottle/category :foo})]
       (handler/handle-message event-handler message)
-      (is (= {:bottle/event-type :foo :bottle/event-id "1"} @event))
-      (is (= {"1" {:bottle/event-type :foo :bottle/event-id "1"}} @events)))))
+      (is (= {:bottle/category :foo :bottle/id "1"} @event))
+      (is (= {"1" {:bottle/category :foo :bottle/id "1"}} @events)))))

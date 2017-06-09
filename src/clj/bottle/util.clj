@@ -1,4 +1,5 @@
-(ns bottle.util)
+(ns bottle.util
+  (:require [taoensso.timbre :as log]))
 
 (defn pretty
   [form]
@@ -9,3 +10,19 @@
 (defn map-vals
   [f coll]
   (into {} (map (fn [[k v]] [k (f v)]) coll)))
+
+(defmacro log-exceptions
+  [message & body]
+  `(try
+     ~@body
+     (catch Exception e#
+       (log/error e# ~message)
+       (throw e#))))
+
+(defmacro log-exceptions
+  [message & body]
+  `(try
+     ~@body
+     (catch Exception e#
+       (log/error e# ~message)
+       (throw e#))))

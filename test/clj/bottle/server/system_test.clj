@@ -15,8 +15,8 @@
              :bottle/port 9001
              :bottle/log-path "/tmp"
              :bottle/event-content-type "application/transit+json"
-             :bottle/event-messaging {:bottle/broker-type :active-mq
-                                      :bottle/broker-path "tcp://qdsdevamq.qg.com:61616"
+             :bottle/event-messaging {:bottle/broker-type :rabbit-mq
+                                      :bottle/broker-path "localhost"
                                       :bottle/queue-name "bottle-1"}})
 
 (defmacro with-system
@@ -39,19 +39,31 @@
      ~@body))
 
 (defn purge [event]
-  (dissoc event :bottle/event-id :bottle/event-time))
+  (if (map? event)
+    (dissoc event
+            :bottle/id
+            :bottle/time)
+    event))
 
 ;; test
 (deftest creating-and-querying-events
   (with-system
     (let [all-conn (client/connect! ws-url)
+          foo-conn (client/connect! ws-url :foo)
+          bar-conn (client/connect! ws-url :bar)
           bus (:event-bus system)
           last-event (atom nil)
           last-foo (atom nil)
           last-bar (atom nil)
-          foo-1 {:bottle/event-type :foo :count 4}
-          bar-2 {:bottle/event-type :bar :name "Bob"}
-          foo-3 {:bottle/event-type :foo :count 15}]
+          foo-1 {:bottle/category :foo
+                 :bottle/closed? false
+                 :count 4 }
+          bar-2 {:bottle/category :bar
+                 :bottle/closed? false
+                 :name "Bob"}
+          foo-3 {:bottle/category :foo
+                 :bottle/closed? false
+                 :count 15}]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
       (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
@@ -63,13 +75,16 @@
         (is (= {} (map-vals purge body))))
 
       ;; create
-      (unpack-response (client/create-event http-url {:bottle/event-type :foo :count 4})
+      (unpack-response (client/create-event http-url {:bottle/category :foo :count 4})
         (is (= 201 status))
-        (is (string? (:bottle/event-id body)))
-        (is (instance? java.util.Date (:bottle/event-time body)))
+        (is (string? (:bottle/id body)))
+        (is (instance? java.util.Date (:bottle/time body)))
         (is (= foo-1 (purge body))))
 
-      (println "FOO FOO" (client/receive! all-conn))
+      ;; websockets
+      (is (= foo-1 (purge (client/receive! all-conn))))
+      (is (= foo-1 (purge (client/receive! foo-conn))))
+      (is (= :timeout (purge (client/receive! bar-conn))))
 
       ;; bus
       (is (= foo-1 (purge @last-event)))
@@ -80,17 +95,22 @@
       (unpack-response (client/get-events http-url)
         (is (= 200 status))
         (is (= {"1" foo-1} (map-vals purge body))))
-      (unpack-response (client/get-events-by-type http-url :bar)
+      (unpack-response (client/get-events-by-category http-url :bar)
         (is (= 200 status))
         (is (= {} body)))
-      (unpack-response (client/get-events-by-type http-url :foo)
+      (unpack-response (client/get-events-by-category http-url :foo)
         (is (= 200 status))
         (is (= {"1" foo-1} (map-vals purge body))))
 
       ;; create
-      (unpack-response (client/create-event http-url {:bottle/event-type :bar :name "Bob"})
+      (unpack-response (client/create-event http-url {:bottle/category :bar :name "Bob"})
         (is (= 201 status))
         (is (= bar-2 (purge body))))
+
+      ;; websockets
+      (is (= bar-2 (purge (client/receive! all-conn))))
+      (is (= :timeout (purge (client/receive! foo-conn))))
+      (is (= bar-2 (purge (client/receive! bar-conn))))
 
       ;; bus
       (is (= bar-2 (purge @last-event)))
@@ -98,9 +118,14 @@
       (is (= bar-2 (purge @last-bar)))
 
       ;; create
-      (unpack-response (client/create-event http-url {:bottle/event-type :foo :count 15})
+      (unpack-response (client/create-event http-url {:bottle/category :foo :count 15})
         (is (= 201 status))
         (is (= foo-3 (purge body))))
+
+      ;; websockets
+      (is (= foo-3 (purge (client/receive! all-conn))))
+      (is (= foo-3 (purge (client/receive! foo-conn))))
+      (is (= :timeout (purge (client/receive! bar-conn))))
 
       ;; bus
       (is (= foo-3 (purge @last-event)))
@@ -111,9 +136,9 @@
       (unpack-response (client/get-events http-url)
         (is (= 200 status))
         (is (= {"1" foo-1  "2" bar-2 "3" foo-3} (map-vals purge body))))
-      (unpack-response (client/get-events-by-type http-url :bar)
+      (unpack-response (client/get-events-by-category http-url :bar)
         (is (= 200 status))
         (is (= {"2" bar-2} (map-vals purge body))))
-      (unpack-response (client/get-events-by-type http-url :foo)
+      (unpack-response (client/get-events-by-category http-url :foo)
         (is (= 200 status))
         (is (= {"1" foo-1 "3" foo-3} (map-vals purge body)))))))

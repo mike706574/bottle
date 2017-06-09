@@ -36,14 +36,13 @@
                                               :bottle/broker-path
                                               :bottle/queue-name]))
 ;; event
-(s/def :bottle/event-id string?)
-(contains? {:bottle/event-type :foo, :bottle/event-id "1", :count 4} [:bottle/event-id])
-(s/def :bottle/event-type keyword?)
-(s/def :bottle/event-template (s/and (s/keys :req [:bottle/event-type])
-                                     #(not (contains? % :bottle/event-id))))
-(s/def :bottle/event (s/keys :req [:bottle/event-id
-                                   :bottle/event-type
-                                   :bottle/event-date]))
+(s/def :bottle/id string?)
+(s/def :bottle/category keyword?)
+(s/def :bottle/event-template (s/and (s/keys :req [:bottle/category])
+                                     #(not (contains? % :bottle/id))))
+(s/def :bottle/event (s/keys :req [:bottle/id
+                                   :bottle/category
+                                   :bottle/time]))
 
 ;; app
 (s/def :bottle/id string?)
