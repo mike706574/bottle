@@ -16,6 +16,8 @@
    [clojure.walk :as walk]
    [cognitect.transit :as transit]
    [com.stuartsierra.component :as component]
+   [clojure.spec.alpha :as spec]
+   [clojure.spec.test.alpha :as stest]
 
    [aleph.http :as http]
    [manifold.stream :as s]
@@ -29,6 +31,8 @@
    [taoensso.timbre :as log]))
 
 (log/set-level! :trace)
+
+(stest/instrument)
 
 (def messaging-config {:bottle/broker-type :rabbit-mq
                        :bottle/broker-path "localhost"
