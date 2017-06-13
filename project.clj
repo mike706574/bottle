@@ -29,7 +29,11 @@
                  [ring/ring-defaults "0.2.3"]
                  [ring-middleware-format "0.7.2"]
                  [compojure "1.5.2"]
-                 [selmer "1.10.7"]]
+                 [selmer "1.10.7"]
+
+                 [buddy/buddy-auth "1.4.1"]
+                 [buddy/buddy-hashers "1.2.0"]
+                 [buddy/buddy-sign "1.5.0"]]
   :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj"]
   :plugins [[cider/cider-nrepl "0.15.0-SNAPSHOT"]
