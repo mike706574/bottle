@@ -29,7 +29,7 @@
                          {:fname log-file})}})))
 
 ;; messaging
-(s/def :bottle/broker-type keyword?)
+(s/def :bottle/broker-type #{:rabbit-mq :active-mq})
 (s/def :bottle/broker-path string?)
 (s/def :bottle/queue-name string?)
 (s/def :bottle/messaging-config (s/keys :req [:bottle/broker-type
@@ -69,7 +69,8 @@
                         (util/pretty config)
                         "Validation failure:\n"
                         (util/pretty validation-failure)))
-        (throw (ex-info "Invalid configuration." config)))
+        (throw (ex-info "Invalid configuration." {:config config
+                                                  :validation-failure validation-failure})))
     (let [{:keys [:bottle/id :bottle/event-messaging]} config]
       (log/info (str "Building " id "."))
       (configure-logging! config)
@@ -92,3 +93,6 @@
        :conn-manager (conn/manager config)
        :handler-factory (server-handler/factory config)
        :app (component/using (service/aleph-service config) [:event-consumer])})))
+
+(s/fdef system
+  :args (s/cat :config :bottle/config))
