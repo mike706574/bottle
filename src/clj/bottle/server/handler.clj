@@ -7,10 +7,12 @@
   "Builds a request handler."
   (handler [this]))
 
-(defrecord BottleHandlerFactory [event-content-type
+(defrecord BottleHandlerFactory [conn-manager
                                  event-bus
+                                 event-content-type
+                                 event-handler
                                  event-manager
-                                 conn-manager]
+                                 user-manager]
   HandlerFactory
   (handler [this]
     (api-handler/handler this)))
@@ -19,4 +21,4 @@
   [config]
   (component/using
    (map->BottleHandlerFactory {:event-content-type (:bottle/event-content-type config)})
-   [:event-bus :user-manager :event-manager :conn-manager :event-handler]))
+   [:conn-manager :event-bus :event-handler :event-manager :user-manager]))
