@@ -64,4 +64,4 @@
           (handle-modifying-event deps request))
    (GET "/api/websocket" request (websocket/handler deps))
    (GET "/api/websocket/:category" request (websocket/handler deps))
-   (route/not-found {:status 200})))
+   (route/not-found {:status 404})))

@@ -4,6 +4,7 @@
             [taoensso.timbre :as log]))
 
 (def supported-media-types #{"application/edn"
+                             "application/json"
                              "application/transit+json"
                              "application/transit+msgpack"})
 

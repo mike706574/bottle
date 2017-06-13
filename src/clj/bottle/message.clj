@@ -1,9 +1,12 @@
 (ns bottle.message
-  (:require [clojure.edn :as edn]
+  (:require [clojure.data.json :as json]
+            [clojure.java.io :as io]
+            [clojure.edn :as edn]
             [clojure.spec.alpha :as s]
             [cognitect.transit :as transit]))
 
 (def supported-content-type #{"application/edn"
+                              "application/json"
                               "application/transit+json"
                               "application/transit+msgpack"})
 
@@ -39,6 +42,10 @@
   [_ body]
   (transit/read (transit/reader body :msgpack)))
 
+(defmethod decode-stream "application/json"
+  [_ body]
+  (json/read (io/reader body) :key-fn keyword))
+
 (defmethod decode-stream :default
   [content-type body]
   (throw (ex-info (str "Content type \"" content-type "\" is not supported.")
@@ -72,6 +79,10 @@
 (defmulti encode
   "Encodes the string using the given content-type."
   (fn [content-type body] content-type))
+
+(defmethod encode "application/json"
+  [_ body]
+  (.getBytes (json/write-str body)))
 
 (defmethod encode "application/edn"
   [_ body]
