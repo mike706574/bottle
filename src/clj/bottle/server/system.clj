@@ -1,20 +1,22 @@
 (ns bottle.server.system
-  (:require [bottle.messaging.consumer :as consumer]
-            [bottle.api.event-handler :as event-handler]
-            [bottle.api.notification :as notification]
-            [bottle.api.event-manager :as event-manager]
-            [bottle.api.message-handler :as message-handler]
-            [bottle.server.connection :as conn]
-            [bottle.server.handler :as server-handler]
+  (:require [bottle.event-handler :as event-handler]
+            [bottle.event-manager :as event-manager]
             [bottle.message :as message]
+            [bottle.message-handler :as message-handler]
+            [bottle.notification :as notification]
+            [bottle.user-manager :as user-manager]
+            [bottle.util :as util]
 
+            [bottle.messaging.consumer :as consumer]
             [bottle.messaging.consumer.activemq]
             [bottle.messaging.consumer.rabbitmq]
             [bottle.messaging.producer.activemq]
             [bottle.messaging.producer.rabbitmq]
 
+            [bottle.server.connection :as conn]
+            [bottle.server.handler :as server-handler]
             [bottle.server.service :as service]
-            [bottle.util :as util]
+
             [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component]
             [manifold.bus :as bus]
@@ -87,6 +89,8 @@
        :event-consumer (component/using
                         (consumer/consumer event-messaging)
                         {:handler :event-message-handler})
+
+       :user-manager (user-manager/user-manager config)
 
        ;; HTTP
        :connections (atom {})

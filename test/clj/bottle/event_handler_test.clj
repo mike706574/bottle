@@ -1,6 +1,6 @@
-(ns bottle.api.event-handler-test
-  (:require [bottle.api.event-handler :as event-handler]
-            [bottle.api.event-manager :as manager]
+(ns bottle.event-handler-test
+  (:require [bottle.event-handler :as event-handler]
+            [bottle.event-manager :as manager]
             [bottle.macros :refer [with-system]]
             [bottle.messaging.handler :as handler]
             [clojure.test :refer [deftest is]]

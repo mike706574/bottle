@@ -1,6 +1,6 @@
 (ns bottle.server.api.routes
-  (:require [bottle.api.event-handler :as handler]
-            [bottle.api.event-manager :as event-manager]
+  (:require [bottle.event-handler :as handler]
+            [bottle.event-manager :as event-manager]
             [bottle.server.api.websocket :as websocket]
             [bottle.server.http :refer [with-body
                                         handle-exceptions

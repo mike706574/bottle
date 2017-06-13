@@ -1,4 +1,4 @@
-(ns bottle.api.notification
+(ns bottle.notification
   (:require [bottle.util :as util]
             [bottle.message :as message]
             [bottle.messaging.handler :as handler]

@@ -1,28 +1,30 @@
-(ns bottle.api.user-repo
+(ns bottle.user-manager
   (:require [buddy.hashers :as hashers]
             [com.stuartsierra.component :as component]))
 
-(defprotocol UserRepo
+(defprotocol UserManager
   "Abstraction around user storage and authentication."
   (add! [this username password] "Adds a user.")
-  (user-by-username [this username] "Finds a user by username.")
+  (find-by-username [this username] "Finds a user by username.")
   (authenticate [this username password] "Authenticates a user."))
 
-(defrecord AtomicUserRepo [next-user-id users]
-  UserRepo
+(defrecord AtomicUserManager [next-user-id users]
+  UserManager
   (add! [this username password]
     (swap! users assoc (swap! next-user-id inc)
            {:userusername username
             :password (hashers/encrypt password)}))
-  (user-by-username [this username]
+
+  (find-by-username [this username]
     (when-let [user (first (filter (fn [[user-id user]] (= (:username user) username)) @users))]
       (val user)))
+
   (authenticate [this username password]
-    (when-let [user (user-by-username this password)]
+    (when-let [user (find-by-username this password)]
       (when (hashers/check password (:password user))
         (dissoc user :password)))))
 
-(defn atomic-user-repo []
+(defn user-manager [_]
   (component/using
-   (map->AtomicUserRepo {})
+   (map->AtomicUserManager {})
    [:next-user-id :users]))

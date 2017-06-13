@@ -7,20 +7,16 @@
   "Builds a request handler."
   (handler [this]))
 
-(defrecord MiloHandlerFactory [event-content-type
-                               event-bus
-                               event-manager
-                               conn-manager]
+(defrecord BottleHandlerFactory [event-content-type
+                                 event-bus
+                                 event-manager
+                                 conn-manager]
   HandlerFactory
   (handler [this]
-    (let [api (api-handler/handler this)]
-      (fn [{uri :uri :as request}]
-        (if (str/starts-with? uri "/api")
-          (api request)
-          (throw (RuntimeException. "Please help me.")))))))
+    (api-handler/handler this)))
 
 (defn factory
   [config]
   (component/using
    (map->MiloHandlerFactory {:event-content-type (:bottle/event-content-type config)})
-   [:event-bus :event-manager :conn-manager :event-handler]))
+   [:event-bus :user-manager :event-manager :conn-manager :event-handler]))

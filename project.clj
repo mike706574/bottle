@@ -6,18 +6,18 @@
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
                  [org.clojure/data.json "0.2.6"]
-                 [org.clojure/core.async "0.3.442"]
+                 [org.clojure/core.async "0.3.443"]
                  [com.stuartsierra/component "0.3.2"]
 
                  ;; Utility
                  [com.cognitect/transit-clj "0.8.300"]
                  [manifold "0.1.6"]
-                 [byte-streams "0.2.2"]
+                 [byte-streams "0.2.3"]
                  [environ "1.1.0"]
                  [clj-time "0.13.0"]
 
                  ;; Messaging
-                 [com.rabbitmq/amqp-client "4.1.0"]
+                 [com.rabbitmq/amqp-client "4.1.1"]
                  [org.apache.activemq/activemq-core "5.7.0"]
 
                  ;; Logging
@@ -25,10 +25,10 @@
 
                  ;; Web
                  [aleph "0.4.3"]
-                 [ring/ring-anti-forgery "1.0.1"]
-                 [ring/ring-defaults "0.2.3"]
+                 [ring/ring-anti-forgery "1.1.0"]
+                 [ring/ring-defaults "0.3.0"]
                  [ring-middleware-format "0.7.2"]
-                 [compojure "1.5.2"]
+                 [compojure "1.6.0"]
                  [selmer "1.10.7"]
 
                  [buddy/buddy-auth "1.4.1"]

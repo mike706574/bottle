@@ -1,6 +1,6 @@
-(ns bottle.api.event-handler
+(ns bottle.event-handler
   (:require [bottle.util :as util]
-            [bottle.api.event-manager :as event-manager]
+            [bottle.event-manager :as event-manager]
             [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component]
             [manifold.bus :as bus]

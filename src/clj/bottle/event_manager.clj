@@ -1,4 +1,4 @@
-(ns bottle.api.event-manager
+(ns bottle.event-manager
   (:require [com.stuartsierra.component :as component]
             [manifold.stream :as s]
             [bottle.util :as util]
