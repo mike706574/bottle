@@ -31,11 +31,11 @@
                          {:fname log-file})}})))
 
 ;; messaging
-(s/def :bottle/broker-type #{:rabbit-mq :active-mq})
+(s/def :bottle/broker-type #{:rabbit-mq :active-mq :stream})
 (s/def :bottle/broker-path string?)
 (s/def :bottle/queue-name string?)
-(s/def :bottle/messaging-config (s/keys :req [:bottle/broker-type
-                                              :bottle/broker-path
+(s/def :bottle/messaging-config (s/keys :req [:bottle/broker-type]
+                                        :opt [:bottle/broker-path
                                               :bottle/queue-name]))
 ;; event
 (s/def :bottle/id string?)
@@ -76,8 +76,7 @@
     (let [{:keys [:bottle/id :bottle/event-messaging]} config]
       (log/info (str "Building " id "."))
       (configure-logging! config)
-      {
-       :events (ref {})
+      {:events (ref {})
 
        :event-bus (bus/event-bus)
 

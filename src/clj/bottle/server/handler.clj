@@ -18,7 +18,8 @@
     (api-handler/handler this)))
 
 (defn factory
-  [config]
+  [{:keys [:bottle/secret-key :bottle/event-content-type]}]
   (component/using
-   (map->BottleHandlerFactory {:event-content-type (:bottle/event-content-type config)})
+   (map->BottleHandlerFactory {:event-content-type event-content-type
+                               :secret-key secret-key})
    [:conn-manager :event-bus :event-handler :event-manager :user-manager]))

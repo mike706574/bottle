@@ -34,9 +34,7 @@
 
 (stest/instrument)
 
-(def messaging-config {:bottle/broker-type :rabbit-mq
-                       :bottle/broker-path "localhost"
-                       :bottle/queue-name "bottle-1"
+(def messaging-config {:bottle/broker-type :stream
                        :bottle/handler :event-message-handler})
 
 (def port 8001)
