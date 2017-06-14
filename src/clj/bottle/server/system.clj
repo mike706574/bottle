@@ -76,8 +76,10 @@
     (let [{:keys [:bottle/id :bottle/event-messaging]} config]
       (log/info (str "Building " id "."))
       (configure-logging! config)
-      {:event-bus (bus/event-bus)
+      {
        :events (ref {})
+
+       :event-bus (bus/event-bus)
 
        ;; Event processing
        :event-function process-event

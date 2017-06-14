@@ -1,28 +1,32 @@
 (ns bottle.user-manager
   (:require [buddy.hashers :as hashers]
+            [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component]))
+
+(s/def :bottle/username string?)
+(s/def :bottle/password string?)
+(s/def :bottle/credentials (s/keys :req [:bottle/username :bottle/password]))
 
 (defprotocol UserManager
   "Abstraction around user storage and authentication."
-  (add! [this username password] "Adds a user.")
-  (find-by-username [this username] "Finds a user by username.")
-  (authenticate [this username password] "Authenticates a user."))
+  (add! [this user] "Adds a user.")
+  (authenticate [this credentials] "Authenticates a user."))
+
+(defn ^:private find-by-username
+  [users username]
+  (when-let [user (first (filter (fn [[user-id user]] (= (:bottle/username user) username)) @users))]
+    (val user)))
 
 (defrecord AtomicUserManager [next-user-id users]
   UserManager
-  (add! [this username password]
+  (add! [this user]
     (swap! users assoc (swap! next-user-id inc)
-           {:userusername username
-            :password (hashers/encrypt password)}))
+           (update user :bottle/password hashers/encrypt)))
 
-  (find-by-username [this username]
-    (when-let [user (first (filter (fn [[user-id user]] (= (:username user) username)) @users))]
-      (val user)))
-
-  (authenticate [this username password]
-    (when-let [user (find-by-username this password)]
-      (when (hashers/check password (:password user))
-        (dissoc user :password)))))
+  (authenticate [this {:keys [:bottle/username :bottle/password]}]
+    (when-let [user (find-by-username users username)]
+      (when (hashers/check password username)
+        (dissoc user :bottle/password)))))
 
 (defn user-manager [_]
   (component/using

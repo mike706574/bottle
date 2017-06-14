@@ -1,6 +1,7 @@
 (ns bottle.server.api.routes
   (:require [bottle.event-handler :as handler]
             [bottle.event-manager :as event-manager]
+            [bottle.user-manager :as user-manager]
             [bottle.server.api.websocket :as websocket]
             [bottle.server.http :refer [with-body
                                         handle-exceptions
@@ -8,6 +9,8 @@
                                         not-acceptable
                                         parsed-body
                                         unsupported-media-type]]
+            [buddy.sign.jwt :as jwt]
+            [clj-time.core :as time]
             [compojure.core :as compojure :refer [ANY DELETE GET PATCH POST PUT]]
             [compojure.route :as route]
             [taoensso.timbre :as log]))
@@ -52,7 +55,7 @@
     nil))
 
 (defn routes
-  [deps]
+  [{:keys [user-manager secret-key] :as deps}]
   (compojure/routes
    (GET "/api/events" request
         (handle-retrieving-events deps request))
@@ -62,6 +65,15 @@
          (handle-creating-event deps request))
    (PATCH "/api/events/:id" request
           (handle-modifying-event deps request))
+   (POST "/api/tokens" request
+         (with-body [credentials :bottle/credentials request]
+           (if-let [user (user-manager/authenticate user-manager credentials)]
+            {:status 201
+             :headers {"Content-Type" "text/plain"}
+             :body (let [claims {:username (:bottle/username credentials)
+                                 :exp (time/plus (time/now) (time/days 1))}]
+                     (jwt/sign claims secret-key {:alg :hs512}))}
+             {:status 401})))
    (GET "/api/websocket" request (websocket/handler deps))
    (GET "/api/websocket/:category" request (websocket/handler deps))
    (route/not-found {:status 404})))
