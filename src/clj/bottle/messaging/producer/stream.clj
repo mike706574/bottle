@@ -11,4 +11,6 @@
 
 (defmethod producer :stream
   [config]
-  (map->StreamProducer {}))
+  (component/using
+   (map->StreamProducer {})
+   {:stream (:bottle/stream-id config)}))

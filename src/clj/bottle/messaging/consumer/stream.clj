@@ -26,4 +26,6 @@
 
 (defmethod consumer :stream
   [config]
-  (component/using (map->StreamConsumer {:id (util/uuid)}) [:consumer-stream]))
+  (component/using
+   (map->StreamConsumer {:id (util/uuid)})
+   {:stream (:bottle/stream-id config)}))

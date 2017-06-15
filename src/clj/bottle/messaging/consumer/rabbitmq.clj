@@ -16,7 +16,7 @@
                      (handleDelivery [consumer-tag envelope props body]
                        (try
                          (log/trace "Processing message.")
-                         (handler/handle-message handler body)
+                         (handler/handle-message handler (String. body "UTF-8"))
                          (catch Exception e
                            (log/error e (str "Exception thrown by message handler."))))))]
       (.basicConsume chan queue-name true consumer)
