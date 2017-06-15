@@ -22,7 +22,7 @@
   (stop [this]
     (log/debug (str "Stopping consumer " id "."))
     (stream/close! stream)
-    (dissoc this :cnn :session :consumer)))
+    (dissoc this stream)))
 
 (defmethod consumer :stream
   [config]

@@ -1,6 +1,7 @@
 (ns bottle.server.system-test
   (:require [aleph.http :as http]
             [bottle.client :as client]
+            [bottle.messaging.producer :as producer]
             [bottle.util :as util :refer [map-vals]]
             [com.stuartsierra.component :as component]
             [clojure.test :refer [deftest testing is]]
@@ -51,6 +52,7 @@
     (let [all-conn (client/connect! ws-url)
           foo-conn (client/connect! ws-url :foo)
           bar-conn (client/connect! ws-url :bar)
+          baz-conn (client/connect! ws-url :baz)
           bus (:event-bus system)
           last-event (atom nil)
           last-foo (atom nil)
@@ -63,7 +65,12 @@
                  :name "Bob"}
           foo-3 {:bottle/category :foo
                  :bottle/closed? false
-                 :count 15}]
+                 :count 15}
+          baz-4 {:bottle/category :baz
+                 :bottle/closed? false
+                 :numbers [1 2 3]}
+          {:keys [bottle/event-messaging bottle/event-content-type]} config
+          producer (producer/producer event-messaging)]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
       (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
@@ -141,4 +148,27 @@
         (is (= {"2" bar-2} (map-vals purge body))))
       (unpack-response (client/get-events-by-category http-url :foo)
         (is (= 200 status))
-        (is (= {"1" foo-1 "3" foo-3} (map-vals purge body)))))))
+        (is (= {"1" foo-1 "3" foo-3} (map-vals purge body))))
+
+      ;; create via message
+      (producer/produce producer (String. (message/encode "application/transit+json" baz-4) "UTF-8"))
+
+      ;; websockets
+      (is (= baz-4 (purge (client/receive! all-conn))))
+      (is (= :timeout (purge (client/receive! foo-conn))))
+      (is (= :timeout (purge (client/receive! bar-conn))))
+      (is (= baz-4 (purge (client/receive! baz-conn))))
+
+      ;; query
+      (unpack-response (client/get-events http-url)
+        (is (= 200 status))
+        (is (= {"1" foo-1  "2" bar-2 "3" foo-3 "4" baz-4} (map-vals purge body))))
+      (unpack-response (client/get-events-by-category http-url :bar)
+        (is (= 200 status))
+        (is (= {"2" bar-2} (map-vals purge body))))
+      (unpack-response (client/get-events-by-category http-url :foo)
+        (is (= 200 status))
+        (is (= {"1" foo-1 "3" foo-3} (map-vals purge body))))
+      (unpack-response (client/get-events-by-category http-url :baz)
+        (is (= 200 status))
+        (is (= {"4" baz-4} (map-vals purge body)))))))
