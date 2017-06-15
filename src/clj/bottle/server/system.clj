@@ -8,10 +8,14 @@
             [bottle.util :as util]
 
             [bottle.messaging.consumer :as consumer]
+
+            ;; TODO
             [bottle.messaging.consumer.activemq]
             [bottle.messaging.consumer.rabbitmq]
+            [bottle.messaging.consumer.stream]
             [bottle.messaging.producer.activemq]
             [bottle.messaging.producer.rabbitmq]
+            [bottle.messaging.producer.stream]
 
             [bottle.server.connection :as conn]
             [bottle.server.handler :as server-handler]
@@ -77,6 +81,8 @@
       (log/info (str "Building " id "."))
       (configure-logging! config)
       {:events (ref {})
+       :next-user-id (atom 0)
+       :users (atom {})
 
        :event-bus (bus/event-bus)
 

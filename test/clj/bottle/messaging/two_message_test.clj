@@ -2,6 +2,10 @@
   (:require [bottle.macros :refer [with-system]]
             [bottle.messaging.consumer :as consumer]
             [bottle.messaging.producer :as producer]
+
+            [bottle.messaging.consumer [activemq rabbitmq stream]]
+            [bottle.messaging.producer [activemq rabbitmq stream]]
+
             [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
             [manifold.stream :as stream])
