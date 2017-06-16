@@ -1,22 +1,22 @@
 (ns bottle.event-manager
-  (:require [com.stuartsierra.component :as component]
-            [manifold.stream :as s]
+  (:require [clojure.spec.alpha :as s]
+            [bottle.specs]
             [bottle.util :as util]
             [taoensso.timbre :as log]))
 
 (defprotocol EventManager
   "Manages events."
   (events [this] "Retrieve all events.")
-  (store [this data] "Get the next event identifier."))
+  (add! [this data] "Add an event."))
 
 (defrecord RefEventManager [counter events]
   EventManager
   (events [this]
     @events)
-  (store [this data]
+  (add! [this template]
     (dosync
      (let [id (str (alter counter inc))
-           event (assoc data
+           event (assoc template
                         :bottle/id id
                         :bottle/time (java.util.Date.)
                         :bottle/closed? false)]
@@ -25,5 +25,23 @@
        event))))
 
 (defn event-manager [config]
-  (component/using (map->RefEventManager {:counter (ref 0)})
-    [:events]))
+  (map->RefEventManager
+   {:counter (ref 0)
+    :events (ref {})}))
+
+(s/def :bottle/event-manager (partial satisfies? EventManager))
+
+(defn ^:private submap?
+  [sub sup]
+  (= sub (select-keys sup (keys sub))))
+
+(s/fdef add!
+  :args (s/cat :event-manager :bottle/event-manager
+               :event-template :bottle/event-template)
+  :ret :bottle/event
+  :fn #(submap? (-> % :args :event-template) (:ret %)))
+
+(s/fdef events
+  :args (s/cat :event-manager :bottle/event-manager)
+  :ret (s/map-of string? :bottle/event)
+  :fn #(submap? (-> % :args :event-template) (:ret %)))

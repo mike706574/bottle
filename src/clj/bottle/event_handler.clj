@@ -23,7 +23,7 @@
             {:status :invalid
              :validation-failure validation-failure})
         (let [event (->> event
-                         (event-manager/store manager)
+                         (event-manager/add! manager)
                          (function))]
           (log/trace (str "Publishing event:\n"
                           (util/pretty event)))

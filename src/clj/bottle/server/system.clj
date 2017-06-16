@@ -41,15 +41,6 @@
 (s/def :bottle/messaging-config (s/keys :req [:bottle/broker-type]
                                         :opt [:bottle/broker-path
                                               :bottle/queue-name]))
-;; event
-(s/def :bottle/id string?)
-(s/def :bottle/category keyword?)
-(s/def :bottle/event-template (s/and (s/keys :req [:bottle/category])
-                                     #(not (contains? % :bottle/id))))
-(s/def :bottle/event (s/keys :req [:bottle/id
-                                   :bottle/category
-                                   :bottle/time]))
-
 ;; app
 (s/def :bottle/id string?)
 (s/def :bottle/port integer?)
@@ -68,6 +59,12 @@
   (log/info (str "Processing event:\n" (util/pretty event)))
   event)
 
+(defn event-consumer
+  [{event-messaging :event-messaging}]
+  (component/using
+    (consumer/consumer event-messaging)
+    {:handler :event-message-handler}))
+
 (defn system
   [config]
   (if-let [validation-failure (s/explain-data :bottle/config config)]
@@ -77,33 +74,31 @@
                         (util/pretty validation-failure)))
         (throw (ex-info "Invalid configuration." {:config config
                                                   :validation-failure validation-failure})))
-    (let [{:keys [:bottle/id :bottle/event-messaging]} config]
-      (log/info (str "Building " id "."))
-      (configure-logging! config)
-      {:events (ref {})
-       :next-user-id (atom 0)
-       :users (atom {})
+    (do (log/info (str "Building " (:id config) "."))
+        (configure-logging! config)
+        {
+         ;; Per-event behavior
+         :event-function process-event
 
-       :event-bus (bus/event-bus)
+         ;; Event storage
+         :event-manager (event-manager/event-manager config)
 
-       ;; Event processing
-       :event-function process-event
-       :event-manager (event-manager/event-manager config)
-       :event-handler (event-handler/event-handler config)
+         ;; User storage
+         :user-manager (user-manager/user-manager config)
 
-       ;; Messaging
-       :event-message-handler (message-handler/event-message-handler config)
-       :event-consumer (component/using
-                        (consumer/consumer event-messaging)
-                        {:handler :event-message-handler})
+         ;; Event processing
+         :event-consumer (event-consumer config)
+         :event-bus (bus/event-bus)
+         :event-handler (event-handler/event-handler config)
 
-       :user-manager (user-manager/user-manager config)
+         ;; Messaging
+         :event-message-handler (message-handler/event-message-handler config)
 
-       ;; HTTP
-       :connections (atom {})
-       :conn-manager (conn/manager config)
-       :handler-factory (server-handler/factory config)
-       :app (component/using (service/aleph-service config) [:event-consumer])})))
+         ;; HTTP
+         :connections (atom {})
+         :conn-manager (conn/manager config)
+         :handler-factory (server-handler/factory config)
+         :app (component/using (service/aleph-service config) [:event-consumer])})))
 
 (s/fdef system
   :args (s/cat :config :bottle/config))

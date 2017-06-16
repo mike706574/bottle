@@ -16,8 +16,8 @@
              :bottle/port 9001
              :bottle/log-path "/tmp"
              :bottle/event-content-type "application/transit+json"
-             :bottle/event-messaging {:bottle/broker-type :rabbit-mq
-                                      :bottle/broker-path "localhost"
+             :bottle/event-messaging {:bottle/broker-type :active-mq
+                                      :bottle/broker-path "tcp://qdsdevamq.qg.com:61616"
                                       :bottle/queue-name "bottle-1"}})
 
 (defmacro with-system

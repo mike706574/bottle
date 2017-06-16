@@ -1,7 +1,6 @@
 (ns bottle.user-manager
   (:require [buddy.hashers :as hashers]
-            [clojure.spec.alpha :as s]
-            [com.stuartsierra.component :as component]))
+            [clojure.spec.alpha :as s]))
 
 (s/def :bottle/username string?)
 (s/def :bottle/password string?)
@@ -12,15 +11,17 @@
   (add! [this user] "Adds a user.")
   (authenticate [this credentials] "Authenticates a user."))
 
+(s/def :bottle/user-manager (partial UserManager))
+
 (defn ^:private find-by-username
   [users username]
   (when-let [user (first (filter (fn [[user-id user]] (= (:bottle/username user) username)) @users))]
     (val user)))
 
-(defrecord AtomicUserManager [next-user-id users]
+(defrecord AtomicUserManager [counter users]
   UserManager
   (add! [this user]
-    (swap! users assoc (swap! next-user-id inc)
+    (swap! users assoc (str (swap! counter inc))
            (update user :bottle/password hashers/encrypt)))
 
   (authenticate [this {:keys [:bottle/username :bottle/password]}]
@@ -29,6 +30,4 @@
         (dissoc user :bottle/password)))))
 
 (defn user-manager [_]
-  (component/using
-   (map->AtomicUserManager {})
-   [:next-user-id :users]))
+  (AtomicUserManager. (atom 0) (atom {})))
