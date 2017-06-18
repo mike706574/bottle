@@ -32,12 +32,6 @@
     {:status 406
      :headers {"Consumes" supported-media-types }}))
 
-(defn not-acceptable
-  [request]
-  (when (not-acceptable? request)
-    {:status 406
-     :headers {"Consumes" supported-media-types }}))
-
 (defn parsed-body
   [request]
   (let [content-type (get-in request [:headers "content-type"])]

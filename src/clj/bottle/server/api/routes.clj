@@ -50,11 +50,6 @@
           (body-response 500 request {:bottle.server/message "An error occurred."})))
       {:bottle.server/message "Invalid request body representation."})))
 
-(defn modify-event
-  [request]
-  (with-body [change :bottle/change request]
-    nil))
-
 (defn unauthorized
   [request]
   (when-not (authenticated? request)
@@ -70,8 +65,6 @@
         (or (unauthorized request) (retrieve-events deps request)))
    (POST "/api/events" request
          (or (unauthorized request) (create-event deps request)))
-   (PATCH "/api/events/:id" request
-          (modify-event deps request))
    (POST "/api/tokens" request
          (with-body [credentials :bottle/credentials request]
            (if-let [user (user-manager/authenticate user-manager credentials)]

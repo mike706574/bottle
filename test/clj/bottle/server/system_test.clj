@@ -1,15 +1,15 @@
 (ns bottle.server.system-test
   (:require [aleph.http :as http]
             [bottle.client :as client]
+            [bottle.message :as message]
             [bottle.messaging.producer :as producer]
+            [bottle.server.system :as system]
             [bottle.util :as util :refer [map-vals]]
             [com.stuartsierra.component :as component]
             [clojure.test :refer [deftest testing is]]
             [manifold.bus :as bus]
             [manifold.deferred :as d]
             [manifold.stream :as s]
-            [bottle.server.system :as system]
-            [bottle.message :as message]
             [taoensso.timbre :as log]))
 
 (def event-messaging {:bottle/broker-type :rabbit-mq

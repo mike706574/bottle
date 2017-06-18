@@ -18,11 +18,3 @@
      (catch Exception e#
        (log/error e# ~message)
        (throw e#))))
-
-(defmacro log-exceptions
-  [message & body]
-  `(try
-     ~@body
-     (catch Exception e#
-       (log/error e# ~message)
-       (throw e#))))

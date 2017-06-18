@@ -3,8 +3,13 @@
             [bottle.messaging.consumer :as consumer]
             [bottle.messaging.producer :as producer]
 
-            [bottle.messaging.consumer [activemq rabbitmq stream]]
-            [bottle.messaging.producer [activemq rabbitmq stream]]
+            [bottle.messaging.consumer.activemq]
+            [bottle.messaging.consumer.rabbitmq]
+            [bottle.messaging.consumer.stream]
+
+            [bottle.messaging.producer.activemq]
+            [bottle.messaging.producer.rabbitmq]
+            [bottle.messaging.producer.stream]
 
             [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
