@@ -25,6 +25,7 @@
    [manifold.bus :as bus]
 
    [bottle.client :as client]
+   [bottle.user-manager :as user-manager]
    [bottle.server.system :as system]
    [bottle.message :as message]
    [bottle.messaging.producer :as producer]
@@ -34,7 +35,9 @@
 
 (stest/instrument)
 
-(def messaging-config {:bottle/broker-type :stream
+(def messaging-config {:bottle/broker-type :rabbit-mq
+                       :bottle/broker-path "localhost"
+                       :bottle/queue-name "bottle-1"
                        :bottle/handler :event-message-handler})
 
 (def port 8001)
@@ -44,7 +47,8 @@
              :bottle/port port
              :bottle/log-path "/tmp"
              :bottle/event-content-type content-type
-             :bottle/event-messaging messaging-config})
+             :bottle/event-messaging messaging-config
+             :bottle/users {"mike" "rocket"}})
 
 (defonce system nil)
 

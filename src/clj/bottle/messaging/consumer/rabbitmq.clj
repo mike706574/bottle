@@ -19,6 +19,7 @@
                          (handler/handle-message handler (String. body "UTF-8"))
                          (catch Exception e
                            (log/error e (str "Exception thrown by message handler."))))))]
+      (.queueDeclare chan queue-name true false false nil)
       (.basicConsume chan queue-name true consumer)
       (assoc this :conn conn :chan chan)))
   (stop [this]

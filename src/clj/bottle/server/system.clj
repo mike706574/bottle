@@ -60,7 +60,7 @@
   event)
 
 (defn event-consumer
-  [{event-messaging :event-messaging}]
+  [{event-messaging :bottle/event-messaging}]
   (component/using
     (consumer/consumer event-messaging)
     {:handler :event-message-handler}))
@@ -101,4 +101,5 @@
          :app (component/using (service/aleph-service config) [:event-consumer])})))
 
 (s/fdef system
-  :args (s/cat :config :bottle/config))
+  :args (s/cat :config :bottle/config)
+  :ret map?)

@@ -11,7 +11,7 @@
   (add! [this user] "Adds a user.")
   (authenticate [this credentials] "Authenticates a user."))
 
-(s/def :bottle/user-manager (partial UserManager))
+(s/def :bottle/user-manager (partial satisfies? UserManager))
 
 (defn ^:private find-by-username
   [users username]
@@ -26,8 +26,19 @@
 
   (authenticate [this {:keys [:bottle/username :bottle/password]}]
     (when-let [user (find-by-username users username)]
-      (when (hashers/check password username)
+      (when (hashers/check password (:bottle/password user))
         (dissoc user :bottle/password)))))
 
-(defn user-manager [_]
-  (AtomicUserManager. (atom 0) (atom {})))
+(s/fdef add!
+  :args (s/cat :user-manager :bottle/user-manager
+               :credentials :bottle/credentials)
+  :ret :bottle/credentials)
+
+(defn user-manager
+  [config]
+  (let [user-manager (AtomicUserManager. (atom 0) (atom {}))]
+    (when-let [users (:bottle/users config)]
+      (doseq [[username password] users]
+        (add! user-manager {:bottle/username username
+                            :bottle/password password})))
+    user-manager))

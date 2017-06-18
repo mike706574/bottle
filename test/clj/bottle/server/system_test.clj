@@ -12,21 +12,25 @@
             [bottle.message :as message]
             [taoensso.timbre :as log]))
 
+(def event-messaging {:bottle/broker-type :rabbit-mq
+                      :bottle/broker-path "localhost"
+                      :bottle/queue-name "bottle-system-test"})
+
+(def port 9001)
+(def content-type "application/transit+json")
 (def config {:bottle/id "bottle-server"
-             :bottle/port 9001
+             :bottle/port port
              :bottle/log-path "/tmp"
-             :bottle/event-content-type "application/transit+json"
-             :bottle/event-messaging {:bottle/broker-type :active-mq
-                                      :bottle/broker-path "tcp://qdsdevamq.qg.com:61616"
-                                      :bottle/queue-name "bottle-1"}})
+             :bottle/event-content-type content-type
+             :bottle/event-messaging event-messaging
+             :bottle/users {"mike" "rocket" }})
 
 (defmacro with-system
   [& body]
   (let [port (:bottle/port config)
         ws-url (str "ws://localhost:" port "/api/websocket")]
     `(let [~'system (component/start-system (system/system config))
-           ~'ws-url ~ws-url
-           ~'http-url (str "http://localhost:" ~port)]
+           ~'ws-url ~ws-url]
        (try
          ~@body
          (finally (component/stop-system ~'system))))))
@@ -46,10 +50,41 @@
             :bottle/time)
     event))
 
-;; test
+(deftest simple-test
+  (with-system
+    (let [client (-> {:url (str "http://localhost:" port)
+                      :content-type content-type}
+                     (client/client)
+                     (client/authenticate {:bottle/username "mike"
+                                           :bottle/password "rocket"}))
+          foo-1 {:bottle/category :foo
+                 :bottle/closed? false
+                 :count 4 }]
+      ;; query
+      (unpack-response (client/events client)
+        (is (= 200 status))
+        (is (= {} (map-vals purge body))))
+
+      ;; create
+      (unpack-response (client/create-event client {:bottle/category :foo :count 4})
+        (is (= 201 status))
+        (is (string? (:bottle/id body)))
+        (is (instance? java.util.Date (:bottle/time body)))
+        (is (= foo-1 (purge body))))
+
+      ;; query
+      (unpack-response (client/events client)
+        (is (= 200 status))
+        (is (= {"1" foo-1} (map-vals purge body)))))))
+
 (deftest creating-and-querying-events
   (with-system
-    (let [all-conn (client/connect! ws-url)
+    (let [client (-> {:url (str "http://localhost:" port)
+                      :content-type content-type}
+                     (client/client)
+                     (client/authenticate {:bottle/username "mike"
+                                           :bottle/password "rocket"}))
+          all-conn (client/connect! ws-url)
           foo-conn (client/connect! ws-url :foo)
           bar-conn (client/connect! ws-url :bar)
           baz-conn (client/connect! ws-url :baz)
@@ -77,12 +112,12 @@
       (s/consume #(reset! last-bar %) (bus/subscribe bus :bar))
 
       ;; query
-      (unpack-response (client/get-events http-url)
+      (unpack-response (client/events client)
         (is (= 200 status))
         (is (= {} (map-vals purge body))))
 
       ;; create
-      (unpack-response (client/create-event http-url {:bottle/category :foo :count 4})
+      (unpack-response (client/create-event client {:bottle/category :foo :count 4})
         (is (= 201 status))
         (is (string? (:bottle/id body)))
         (is (instance? java.util.Date (:bottle/time body)))
@@ -99,18 +134,18 @@
       (is (nil? @last-bar))
 
       ;; query
-      (unpack-response (client/get-events http-url)
+      (unpack-response (client/events client)
         (is (= 200 status))
         (is (= {"1" foo-1} (map-vals purge body))))
-      (unpack-response (client/get-events-by-category http-url :bar)
+      (unpack-response (client/events-by-category client :bar)
         (is (= 200 status))
         (is (= {} body)))
-      (unpack-response (client/get-events-by-category http-url :foo)
+      (unpack-response (client/events-by-category client :foo)
         (is (= 200 status))
         (is (= {"1" foo-1} (map-vals purge body))))
 
       ;; create
-      (unpack-response (client/create-event http-url {:bottle/category :bar :name "Bob"})
+      (unpack-response (client/create-event client {:bottle/category :bar :name "Bob"})
         (is (= 201 status))
         (is (= bar-2 (purge body))))
 
@@ -125,7 +160,7 @@
       (is (= bar-2 (purge @last-bar)))
 
       ;; create
-      (unpack-response (client/create-event http-url {:bottle/category :foo :count 15})
+      (unpack-response (client/create-event client {:bottle/category :foo :count 15})
         (is (= 201 status))
         (is (= foo-3 (purge body))))
 
@@ -140,18 +175,20 @@
       (is (= bar-2 (purge @last-bar)))
 
       ;; query
-      (unpack-response (client/get-events http-url)
+      (unpack-response (client/events client)
         (is (= 200 status))
         (is (= {"1" foo-1  "2" bar-2 "3" foo-3} (map-vals purge body))))
-      (unpack-response (client/get-events-by-category http-url :bar)
+      (unpack-response (client/events-by-category client :bar)
         (is (= 200 status))
         (is (= {"2" bar-2} (map-vals purge body))))
-      (unpack-response (client/get-events-by-category http-url :foo)
+      (unpack-response (client/events-by-category client :foo)
         (is (= 200 status))
         (is (= {"1" foo-1 "3" foo-3} (map-vals purge body))))
 
       ;; create via message
       (producer/produce producer (String. (message/encode "application/transit+json" baz-4) "UTF-8"))
+
+      (Thread/sleep 1000)
 
       ;; websockets
       (is (= baz-4 (purge (client/receive! all-conn))))
@@ -160,15 +197,15 @@
       (is (= baz-4 (purge (client/receive! baz-conn))))
 
       ;; query
-      (unpack-response (client/get-events http-url)
+      (unpack-response (client/events client)
         (is (= 200 status))
         (is (= {"1" foo-1  "2" bar-2 "3" foo-3 "4" baz-4} (map-vals purge body))))
-      (unpack-response (client/get-events-by-category http-url :bar)
+      (unpack-response (client/events-by-category client :bar)
         (is (= 200 status))
         (is (= {"2" bar-2} (map-vals purge body))))
-      (unpack-response (client/get-events-by-category http-url :foo)
+      (unpack-response (client/events-by-category client :foo)
         (is (= 200 status))
         (is (= {"1" foo-1 "3" foo-3} (map-vals purge body))))
-      (unpack-response (client/get-events-by-category http-url :baz)
+      (unpack-response (client/events-by-category client :baz)
         (is (= 200 status))
         (is (= {"4" baz-4} (map-vals purge body)))))))

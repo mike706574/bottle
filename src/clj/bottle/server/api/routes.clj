@@ -9,6 +9,7 @@
                                         not-acceptable
                                         parsed-body
                                         unsupported-media-type]]
+            [buddy.auth :refer [authenticated?]]
             [buddy.sign.jwt :as jwt]
             [clj-time.core :as time]
             [compojure.core :as compojure :refer [ANY DELETE GET PATCH POST PUT]]
@@ -29,7 +30,7 @@
   (apply every-pred (into (list (constantly true))
                           (filter identity (map event-clause params)))))
 
-(defn handle-retrieving-events
+(defn retrieve-events
   [{:keys [event-manager]} request]
   (handle-exceptions request
     (or (unsupported-media-type request)
@@ -38,7 +39,7 @@
               response (into {} (filter matches? events))]
           (body-response 200 request response)))))
 
-(defn handle-creating-event
+(defn create-event
   [{:keys [event-handler]} request]
   (handle-exceptions request
     (if-let [event (parsed-body request)]
@@ -49,30 +50,36 @@
           (body-response 500 request {:bottle.server/message "An error occurred."})))
       {:bottle.server/message "Invalid request body representation."})))
 
-(defn handle-modifying-event
+(defn modify-event
   [request]
   (with-body [change :bottle/change request]
     nil))
 
+(defn unauthorized
+  [request]
+  (when-not (authenticated? request)
+    {:status 401}))
+
 (defn routes
   [{:keys [user-manager secret-key] :as deps}]
   (compojure/routes
+
    (GET "/api/events" request
-        (handle-retrieving-events deps request))
+        (or (unauthorized request) (retrieve-events deps request)))
    (GET "/api/events/:category" request
-        (handle-retrieving-events deps request))
+        (or (unauthorized request) (retrieve-events deps request)))
    (POST "/api/events" request
-         (handle-creating-event deps request))
+         (or (unauthorized request) (create-event deps request)))
    (PATCH "/api/events/:id" request
-          (handle-modifying-event deps request))
+          (modify-event deps request))
    (POST "/api/tokens" request
          (with-body [credentials :bottle/credentials request]
            (if-let [user (user-manager/authenticate user-manager credentials)]
-            {:status 201
-             :headers {"Content-Type" "text/plain"}
-             :body (let [claims {:username (:bottle/username credentials)
-                                 :exp (time/plus (time/now) (time/days 1))}]
-                     (jwt/sign claims secret-key {:alg :hs512}))}
+             {:status 201
+              :headers {"Content-Type" "text/plain"}
+              :body (let [claims {:username (:bottle/username credentials)
+                                  :exp (time/plus (time/now) (time/days 1))}]
+                      (jwt/sign claims secret-key {:alg :hs512}))}
              {:status 401})))
    (GET "/api/websocket" request (websocket/handler deps))
    (GET "/api/websocket/:category" request (websocket/handler deps))

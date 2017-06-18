@@ -18,17 +18,26 @@
                        :bottle/broker-path "localhost"
                        :bottle/queue-name "bottle-messaging-test"})
 
+(def port 9004)
+(def http-url (str "http://localhost:" port))
+
+(def username "mike")
+(def password "rocket")
+(def credentials {:bottle/username username
+                  :bottle/password password})
+
 (def config {:bottle/id "bottle-server"
-             :bottle/port 9003
+             :bottle/port port
              :bottle/log-path "/tmp"
              :bottle/event-content-type content-type
-             :bottle/event-messaging messaging-config})
+             :bottle/event-messaging messaging-config
+             :bottle/users {"mike" "rocket" }})
 
 (defn send-message
   [message]
   (producer/produce
    (producer/producer messaging-config)
-   (String. (message/encode content-type message))))
+   (String. (message/encode content-type message) "UTF-8")))
 
 (message/encode "application/transit+msgpack" "foo")
 
@@ -54,7 +63,12 @@
 
 (deftest creating-and-querying-events
   (with-system
-    (let [bus (:event-bus system)
+    (let [client (-> {:url (str "http://localhost:" port)
+                      :content-type content-type}
+                     (client/client)
+                     (client/authenticate {:bottle/username "mike"
+                                           :bottle/password "rocket"}))
+          bus (:event-bus system)
           last-event (atom nil)
           last-foo (atom nil)
           foo-1 {:bottle/category :foo
@@ -65,17 +79,16 @@
       (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
 
       ;; query
-      (unpack-response (client/get-events http-url)
+      (unpack-response (client/events client)
         (is (= 200 status))
         (is (= {} body)))
 
-      (send-message {:bottle/category :foo
-                     :count 4})
+      (send-message {:bottle/category :foo :count 4})
 
       (Thread/sleep 100)
 
       ;; query
-      (unpack-response (client/get-events http-url)
+      (unpack-response (client/events client)
         (is (= 200 status))
         (is (= ["1"] (keys body)))
         (let [event (get body "1")]

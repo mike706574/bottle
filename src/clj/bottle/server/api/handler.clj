@@ -1,5 +1,7 @@
 (ns bottle.server.api.handler
   (:require [bottle.server.api.routes :as api-routes]
+            [buddy.auth.backends.token :refer [jws-backend]]
+            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
             [clojure.string :as str]
             [ring.middleware.defaults :refer [wrap-defaults
                                               api-defaults]]
@@ -20,6 +22,10 @@
 
 (defn handler
   [deps]
-  (-> (api-routes/routes deps)
-      (wrap-defaults api-defaults)
-      (wrap-logging)))
+  (let [secret-key (:secret-key deps)
+        auth-backend (jws-backend {:secret secret-key :options {:alg :hs512}})]
+    (-> (api-routes/routes deps)
+        (wrap-authorization auth-backend)
+        (wrap-authentication auth-backend)
+        (wrap-defaults api-defaults)
+        (wrap-logging))))

@@ -11,17 +11,17 @@
   (let [event-arg (atom nil)]
     {:event-bus (bus/event-bus)
      :event event-arg
-     :events (ref {})
      :event-function (fn [event] (reset! event-arg event))
      :event-manager (manager/event-manager config)
      :event-handler (event-handler/event-handler config)}))
 
 (deftest messages
   (with-system (system {})
-    (let [{:keys [event events event-handler]} system]
+    (let [{:keys [event event-manager event-handler]} system]
       (event-handler/handle-event event-handler {:bottle/category :foo})
       (is (= {:bottle/category :foo :bottle/id "1"}
              (select-keys @event [:bottle/category :bottle/id])))
-      (is (= 1 (count @events)))
-      (is (= {:bottle/category :foo :bottle/id "1"}
-             (select-keys (get @events "1") [:bottle/category :bottle/id]))))))
+      (let [events (manager/events event-manager)]
+        (is (= 1 (count events)))
+        (is (= {:bottle/category :foo :bottle/id "1"}
+               (select-keys (get events "1") [:bottle/category :bottle/id])))))))

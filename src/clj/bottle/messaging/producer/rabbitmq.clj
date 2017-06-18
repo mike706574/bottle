@@ -8,6 +8,7 @@
     (with-open [conn (.newConnection (doto (com.rabbitmq.client.ConnectionFactory.)
                                        (.setHost broker-path)))
                 chan (.createChannel conn)]
+      (.queueDeclare chan queue-name true false false nil)
       (.basicPublish chan "" queue-name nil (if (string? message)
                                               (.getBytes message)
                                               message)))))
