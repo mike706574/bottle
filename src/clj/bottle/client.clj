@@ -2,7 +2,7 @@
   (:require [aleph.http :as http]
             [manifold.stream :as s]
             [bottle.message :as message]
-            [bottle.user-manager :as user-manager]))
+            [bottle.users :as users]))
 
 (def content-type "application/transit+json")
 
@@ -58,7 +58,7 @@
 
 (defn add-user!
   [system username password]
-  (user-manager/add! (:user-manager system) {:bottle/username username
+  (users/add! (:user-manager system) {:bottle/username username
                                              :bottle/password password}))
 
 (defprotocol Client

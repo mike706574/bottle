@@ -1,7 +1,7 @@
 (ns bottle.server.api.routes
   (:require [bottle.event-handler :as handler]
             [bottle.event-manager :as event-manager]
-            [bottle.user-manager :as user-manager]
+            [bottle.users :as users]
             [bottle.server.api.websocket :as websocket]
             [bottle.server.http :refer [with-body
                                         handle-exceptions
@@ -67,7 +67,7 @@
          (or (unauthorized request) (create-event deps request)))
    (POST "/api/tokens" request
          (with-body [credentials :bottle/credentials request]
-           (if-let [user (user-manager/authenticate user-manager credentials)]
+           (if-let [user (users/authenticate user-manager credentials)]
              {:status 201
               :headers {"Content-Type" "text/plain"}
               :body (let [claims {:username (:bottle/username credentials)

@@ -4,7 +4,7 @@
             [bottle.message :as message]
             [bottle.message-handler :as message-handler]
             [bottle.notification :as notification]
-            [bottle.user-manager :as user-manager]
+            [bottle.users :as users]
             [bottle.util :as util]
 
             [bottle.messaging.consumer :as consumer]
@@ -85,7 +85,7 @@
          :event-manager (event-manager/event-manager config)
 
          ;; User storage
-         :user-manager (user-manager/user-manager config)
+         :user-manager (users/user-manager config)
 
          ;; Event processing
          :event-consumer (event-consumer config)

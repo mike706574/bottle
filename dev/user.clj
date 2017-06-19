@@ -25,7 +25,7 @@
    [manifold.bus :as bus]
 
    [bottle.client :as client]
-   [bottle.user-manager :as user-manager]
+   [bottle.users :as users]
    [bottle.server.system :as system]
    [bottle.message :as message]
    [bottle.messaging.producer :as producer]
