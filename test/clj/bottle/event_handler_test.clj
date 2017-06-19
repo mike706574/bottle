@@ -13,7 +13,11 @@
      :event event-arg
      :event-function (fn [event] (reset! event-arg event))
      :event-manager (manager/event-manager config)
-     :event-handler (event-handler/event-handler config)}))
+     :event-handler (component/using
+                     (event-handler/event-handler config)
+                     {:manager :event-manager
+                      :function :event-function
+                      :bus :event-bus})}))
 
 (deftest messages
   (with-system (system {})

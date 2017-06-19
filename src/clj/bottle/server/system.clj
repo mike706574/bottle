@@ -47,10 +47,11 @@
 (s/def :bottle/log-path string?)
 (s/def :bottle/event-content-type string?)
 (s/def :bottle/event-messaging :bottle/messaging-config)
-
+(s/def :bottle/user-manager-type #{:atomic})
 (s/def :bottle/config (s/keys :req [:bottle/id
                                     :bottle/port
                                     :bottle/log-path
+                                    :bottle/user-manager-type
                                     :bottle/event-content-type
                                     :bottle/event-messaging]))
 

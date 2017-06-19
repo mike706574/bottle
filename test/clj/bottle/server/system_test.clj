@@ -1,6 +1,7 @@
 (ns bottle.server.system-test
   (:require [aleph.http :as http]
             [bottle.client :as client]
+            [bottle.macros :refer [with-system]]
             [bottle.message :as message]
             [bottle.messaging.producer :as producer]
             [bottle.server.system :as system]
@@ -21,19 +22,10 @@
 (def config {:bottle/id "bottle-server"
              :bottle/port port
              :bottle/log-path "/tmp"
+             :bottle/user-manager-type :atomic
              :bottle/event-content-type content-type
              :bottle/event-messaging event-messaging
-             :bottle/users {"mike" "rocket" }})
-
-(defmacro with-system
-  [& body]
-  (let [port (:bottle/port config)
-        ws-url (str "ws://localhost:" port "/api/websocket")]
-    `(let [~'system (component/start-system (system/system config))
-           ~'ws-url ~ws-url]
-       (try
-         ~@body
-         (finally (component/stop-system ~'system))))))
+             :bottle/users {"mike" "rocket"}})
 
 (defmacro unpack-response
   [call & body]
@@ -51,7 +43,7 @@
     event))
 
 (deftest simple-test
-  (with-system
+  (with-system (system/system config)
     (let [client (-> {:url (str "http://localhost:" port)
                       :content-type content-type}
                      (client/client)
@@ -78,8 +70,11 @@
         (is (= {"1" foo-1} (map-vals purge body)))))))
 
 (deftest creating-and-querying-events
-  (with-system
-    (let [client (-> {:url (str "http://localhost:" port)
+  (with-system (system/system config)
+    (let [host (str "localhost:" port)
+          http-url (str "http://" host)
+          ws-url (str "ws://" host)
+          client (-> {:url http-url
                       :content-type content-type}
                      (client/client)
                      (client/authenticate {:bottle/username "mike"

@@ -24,6 +24,10 @@
                  ;; Logging
                  [com.taoensso/timbre "4.10.0"]
 
+                 ;; Database
+                 [org.clojure/java.jdbc "0.6.1"]
+                 [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
+
                  ;; Web
                  [aleph "0.4.3"]
                  [ring/ring-anti-forgery "1.1.0"]

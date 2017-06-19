@@ -34,9 +34,10 @@
   ([ws-url]
    (connect! ws-url nil))
   ([ws-url category]
-   (let [url (if category
-               (str ws-url "/" (name category))
-               ws-url)
+   (let [endpoint-url (str ws-url "/api/websocket")
+         url (if category
+               (str endpoint-url "/" (name category))
+               endpoint-url)
          conn @(http/websocket-client url)]
      conn)))
 

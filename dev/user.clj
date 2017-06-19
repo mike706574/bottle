@@ -48,6 +48,7 @@
              :bottle/log-path "/tmp"
              :bottle/event-content-type content-type
              :bottle/event-messaging messaging-config
+             :bottle/user-manager-type :atomic
              :bottle/users {"mike" "rocket"}})
 
 (defonce system nil)

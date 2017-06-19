@@ -34,7 +34,9 @@
                :credentials :bottle/credentials)
   :ret :bottle/credentials)
 
-(defn user-manager
+(defmulti user-manager :bottle/user-manager-type)
+
+(defmethod user-manager :atomic
   [config]
   (let [user-manager (AtomicUserManager. (atom 0) (atom {}))]
     (when-let [users (:bottle/users config)]
@@ -42,3 +44,20 @@
         (add! user-manager {:bottle/username username
                             :bottle/password password})))
     user-manager))
+
+(comment
+  (defrecord JdbcUserManager [spec]
+    UserManager
+    (add! [this user]
+      (swap! users assoc (str (swap! counter inc))
+             (update user :bottle/password hashers/encrypt)))
+
+    (authenticate [this {:keys [:bottle/username :bottle/password]}]
+      (when-let [user (find-by-username users username)]
+        (when (hashers/check password (:bottle/password user))
+          (dissoc user :bottle/password))))))
+
+(defmethod user-manager :jdbc
+  [config]
+
+  )

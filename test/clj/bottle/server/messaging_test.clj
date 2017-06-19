@@ -1,6 +1,7 @@
 (ns bottle.server.messaging-test
   (:require [aleph.http :as http]
             [bottle.client :as client]
+            [bottle.macros :refer [with-system]]
             [bottle.messaging.producer :as producer]
             [bottle.util :as util]
             [com.stuartsierra.component :as component]
@@ -19,7 +20,6 @@
                        :bottle/queue-name "bottle-messaging-test"})
 
 (def port 9004)
-(def http-url (str "http://localhost:" port))
 
 (def username "mike")
 (def password "rocket")
@@ -31,6 +31,7 @@
              :bottle/log-path "/tmp"
              :bottle/event-content-type content-type
              :bottle/event-messaging messaging-config
+             :bottle/user-manager-type :atomic
              :bottle/users {"mike" "rocket" }})
 
 (defn send-message
@@ -41,18 +42,6 @@
 
 (message/encode "application/transit+msgpack" "foo")
 
-(defmacro with-system
-  [& body]
-  (let [port (:bottle/port config)
-        ws-url (str "ws://localhost:" port "/api/websocket")]
-    `(let [~'system (component/start-system (system/system config))
-           ~'ws-url ~ws-url
-           ~'http-url (str "http://localhost:" ~port)]
-       (try
-         ~@body
-         (finally
-           (component/stop-system ~'system))))))
-
 (defmacro unpack-response
   [call & body]
   `(let [~'response ~call
@@ -62,7 +51,7 @@
      ~@body))
 
 (deftest creating-and-querying-events
-  (with-system
+  (with-system (system/system config)
     (let [client (-> {:url (str "http://localhost:" port)
                       :content-type content-type}
                      (client/client)
