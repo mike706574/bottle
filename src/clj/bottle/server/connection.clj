@@ -27,5 +27,5 @@
 
 (defn manager
   [config]
-  (component/using (map->AtomConnectionManager {:counter (atom 0)})
-    [:connections]))
+  (map->AtomConnectionManager {:counter (atom 0)
+                               :connections (atom {})}))

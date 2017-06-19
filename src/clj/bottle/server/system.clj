@@ -96,7 +96,6 @@
          :event-message-handler (message-handler/event-message-handler config)
 
          ;; HTTP
-         :connections (atom {})
          :conn-manager (conn/manager config)
          :handler-factory (server-handler/factory config)
          :app (component/using (service/aleph-service config) [:event-consumer])})))
