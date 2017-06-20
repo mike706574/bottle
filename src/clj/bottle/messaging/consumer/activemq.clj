@@ -32,7 +32,7 @@
     (dissoc this :cnn :session :consumer)))
 
 (defmethod consumer :active-mq
-  [{:keys [:bottle/broker-path :bottle/queue-name] :as config}]
+  [{:keys [:bottle.messaging/broker-path :bottle.messaging/queue-name] :as config}]
   (map->ActiveMQConsumer
    {:id (util/uuid)
     :broker-path broker-path

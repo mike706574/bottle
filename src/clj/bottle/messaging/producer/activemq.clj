@@ -13,6 +13,6 @@
         (.send producer message)))))
 
 (defmethod producer :active-mq
-  [{:keys [:bottle/broker-path :bottle/queue-name]}]
+  [{:keys [:bottle.messaging/broker-path :bottle.messaging/queue-name]}]
   (map->ActiveMQProducer {:broker-path broker-path
                           :queue-name queue-name}))

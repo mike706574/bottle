@@ -23,22 +23,22 @@
    [manifold.stream :as s]
    [manifold.deferred :as d]
    [manifold.bus :as bus]
+   [taoensso.timbre :as log]
 
    [bottle.client :as client]
    [bottle.users :as users]
    [bottle.server.system :as system]
    [bottle.message :as message]
-   [bottle.messaging.producer :as producer]
-   [taoensso.timbre :as log]))
+   [bottle.messaging.producer :as producer]))
 
 (log/set-level! :trace)
 
 (stest/instrument)
 
-(def messaging-config {:bottle/broker-type :rabbit-mq
-                       :bottle/broker-path "localhost"
-                       :bottle/queue-name "bottle-1"
-                       :bottle/handler :event-message-handler})
+(def messaging-config {:bottle.messaging/broker-type :rabbit-mq
+                       :bottle.messaging/broker-path "localhost"
+                       :bottle.messaging/queue-name "bottle-1"
+                       :bottle.messaging/handler :event-message-handler})
 
 (def port 8001)
 (def content-type "application/transit+json")

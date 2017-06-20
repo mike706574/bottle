@@ -1,7 +1,15 @@
-(ns bottle.messaging.consumer)
+(ns bottle.messaging.consumer
+  (:require [clojure.spec.alpha :as s]
+            [com.stuartsierra.component :as component]))
 
-(defmulti consumer :bottle/broker-type)
+(defmulti consumer :bottle.messaging/broker-type)
 
 (defmethod consumer :default
-  [{broker-type :bottle/broker-type :as config}]
-  (throw (ex-info (str "Invalid broker type: \"" broker-type "\"") (or config {}))))
+  [{broker-type :bottle.messaging/broker-type :as config}]
+  (throw (ex-info (str "Invalid broker type: " (name broker-type)) (or config {}))))
+
+;;TODO
+(comment
+  (s/fdef consumer
+    :args (s/cat :config :bottle.messaging/config )
+    :ret (partial satisfies? component/Lifecycle)))

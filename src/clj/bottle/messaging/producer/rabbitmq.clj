@@ -14,6 +14,6 @@
                                               message)))))
 
 (defmethod producer :rabbit-mq
-  [{:keys [:bottle/broker-path :bottle/queue-name]}]
+  [{:keys [:bottle.messaging/broker-path :bottle.messaging/queue-name]}]
   (map->RabbitMQProducer {:broker-path broker-path
                           :queue-name queue-name}))

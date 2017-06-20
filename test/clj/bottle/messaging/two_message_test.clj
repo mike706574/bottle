@@ -40,20 +40,20 @@
 
 (deftest activemq
   (testing "Sending and receiving 2 messages with ActiveMQ."
-    (send-two-messages {:bottle/broker-type :active-mq
-                        :bottle/broker-path "tcp://localhost:62626"
-                        :bottle/queue-name queue-name}
+    (send-two-messages {:bottle.messaging/broker-type :active-mq
+                        :bottle.messaging/broker-path "tcp://localhost:62626"
+                        :bottle.messaging/queue-name queue-name}
                        {})))
 
 (deftest rabbitmq
   (testing "Sending and receiving 2 messages with RabbitMQ."
-    (send-two-messages {:bottle/broker-type :rabbit-mq
-                        :bottle/broker-path "localhost"
-                        :bottle/queue-name queue-name}
+    (send-two-messages {:bottle.messaging/broker-type :rabbit-mq
+                        :bottle.messaging/broker-path "localhost"
+                        :bottle.messaging/queue-name queue-name}
                        {})))
 
 (deftest stream
   (testing "Sending and receiving 2 messages with a Manifold stream."
-    (send-two-messages {:bottle/broker-type :stream
-                        :bottle/stream-id :test-stream}
+    (send-two-messages {:bottle.messaging/broker-type :stream
+                        :bottle.messaging/stream-id :test-stream}
                        {:test-stream (stream/stream)})))

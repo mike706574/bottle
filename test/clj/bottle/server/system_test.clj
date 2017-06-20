@@ -13,9 +13,9 @@
             [manifold.stream :as s]
             [taoensso.timbre :as log]))
 
-(def event-messaging {:bottle/broker-type :rabbit-mq
-                      :bottle/broker-path "localhost"
-                      :bottle/queue-name "bottle-system-test"})
+(def event-messaging {:bottle.messaging/broker-type :rabbit-mq
+                      :bottle.messaging/broker-path "localhost"
+                      :bottle.messaging/queue-name "bottle-system-test"})
 
 (def port 9001)
 (def content-type "application/transit+json")
