@@ -3,9 +3,11 @@
             [com.stuartsierra.component :as component])
   (:import [com.mchange.v2.c3p0 ComboPooledDataSource]))
 
-(s/def :bottle.database/subprotocol #{"postgresql"})
-(s/def :bottle.database/driver-class #{"org.postgresql.Driver"})
-(s/def :bottle.database/subname string?)
+(s/def :bottle.database/subprotocol #{"postgresql" "mysql"})
+(s/def :bottle.database/driver-class #{"org.postgresql.Driver" "com.mysql.jdbc.Driver"})
+(s/def :bottle.database/host string?)
+(s/def :bottle.database/port integer?)
+(s/def :bottle.database/database string?)
 (s/def :bottle.database/username string?)
 (s/def :bottle.database/password string?)
 (s/def :bottle.database/excess-timeout number?)
@@ -19,10 +21,12 @@
 
 (s/def :bottle.database/config (s/keys :req [:bottle.database/subprotocol
                                              :bottle.database/driver-class
-                                             :bottle.database/subname
+                                             :bottle.database/host
+                                             :bottle.database/database
                                              :bottle.database/username
                                              :bottle.database/password]
-                                       :opt [:bottle.database/excess-timeout
+                                       :opt [:bottle.database/port
+                                             :bottle.database/excess-timeout
                                              :bottle.database/idle-timeout
                                              :bottle.database/minimum-pool-size
                                              :bottle.database/maximum-pool-size
@@ -35,7 +39,9 @@
   component/Lifecycle
   (start [this]
     (let [{:keys [:bottle.database/subprotocol
-                  :bottle.database/subname
+                  :bottle.database/host
+                  :bottle.database/port
+                  :bottle.database/database
                   :bottle.database/driver-class
                   :bottle.database/username
                   :bottle.database/password
@@ -59,7 +65,7 @@
           _           (println excess-timeout)
           ds (doto (ComboPooledDataSource.)
                (.setDriverClass driver-class)
-               (.setJdbcUrl (str "jdbc:" subprotocol ":" subname))
+               (.setJdbcUrl (str "jdbc:" subprotocol "://" (if port (str host ":" port) host) "/" database))
                (.setUser username)
                (.setPassword password)
                (.setMaxIdleTimeExcessConnections excess-timeout)

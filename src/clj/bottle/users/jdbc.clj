@@ -14,7 +14,8 @@
 (def db
   {:classname "org.postgresql.Driver"
    :subprotocol "postgresql"
-   :subname "//localhost/postgres"
+   :host "localhost"
+   :port 5432
    :dbname "foo"
    :user "postgres"
    :password "postgres"})

@@ -28,6 +28,7 @@
                  [org.clojure/java.jdbc "0.6.1"]
                  [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
                  [postgresql "9.3-1102.jdbc41"]
+                 [mysql/mysql-connector-java "6.0.6"]
 
                  ;; Web
                  [aleph "0.4.3"]
