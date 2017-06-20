@@ -12,7 +12,8 @@
   UserManager
   (add! [this user]
     (swap! users assoc (str (swap! counter inc))
-           (update user :bottle/password hashers/encrypt)))
+           (update user :bottle/password hashers/encrypt))
+    (dissoc user :bottle/password))
 
   (authenticate [this {:keys [:bottle/username :bottle/password]}]
     (when-let [user (find-by-username users username)]

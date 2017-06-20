@@ -12,12 +12,8 @@
             ;; TODO
             [bottle.messaging]
 
-            [bottle.messaging.consumer.activemq]
-            [bottle.messaging.consumer.rabbitmq]
-            [bottle.messaging.consumer.stream]
-            [bottle.messaging.producer.activemq]
-            [bottle.messaging.producer.rabbitmq]
-            [bottle.messaging.producer.stream]
+            [bottle.messaging.consumer [activemq rabbitmq stream]]
+            [bottle.messaging.producer [activemq rabbitmq stream]]
 
             [bottle.server.connection :as conn]
             [bottle.server.handler :as server-handler]

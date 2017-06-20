@@ -14,8 +14,6 @@
 
 (s/def :bottle/producer (partial satisfies? Producer))
 
-;; TODO
-(comment
-  (s/fdef producer
-    :args (s/cat :config :bottle.messaging/config )
-    :ret :bottle/producer))
+(s/fdef producer
+  :args (s/cat :config :bottle.messaging/config )
+  :ret :bottle/producer)

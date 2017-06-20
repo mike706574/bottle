@@ -23,3 +23,7 @@
   [{user-manager-type :bottle/user-manager-type}]
   (throw (ex-info (str "Invalid user manager type: " (name user-manager-type))
                   {:user-manager-type user-manager-type})))
+
+(s/fdef user-manager
+  :args (s/cat :config map?)
+  :ret (partial satisfies? UserManager))

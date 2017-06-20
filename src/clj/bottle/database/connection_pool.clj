@@ -1,4 +1,4 @@
-(ns bottle.connection-pool
+(ns bottle.database.connection-pool
   (:require [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component])
   (:import [com.mchange.v2.c3p0 ComboPooledDataSource]))
