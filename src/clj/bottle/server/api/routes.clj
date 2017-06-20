@@ -58,7 +58,8 @@
 (defn routes
   [{:keys [user-manager secret-key] :as deps}]
   (compojure/routes
-
+   (GET "/api/healthcheck" request
+        {:status 200})
    (GET "/api/events" request
         (or (unauthorized request) (retrieve-events deps request)))
    (GET "/api/events/:category" request

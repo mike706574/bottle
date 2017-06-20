@@ -69,6 +69,50 @@
         (is (= 200 status))
         (is (= {"1" foo-1} (map-vals purge body)))))))
 
+(deftest messaging
+  (with-system (system/system config)
+    (let [client (-> {:url (str "http://localhost:" port)
+                      :content-type content-type}
+                     (client/client)
+                     (client/authenticate {:bottle/username "mike"
+                                           :bottle/password "rocket"}))
+          bus (:event-bus system)
+          last-event (atom nil)
+          last-foo (atom nil)
+          foo-1 {:bottle/category :foo
+                 :bottle/id "1"
+                 :count 4}
+          producer (producer/producer event-messaging)]
+
+      (s/consume #(reset! last-event %) (bus/subscribe bus :all))
+      (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
+
+      ;; query
+      (unpack-response (client/events client)
+        (is (= 200 status))
+        (is (= {} body)))
+
+      (producer/produce producer (String. (message/encode "application/transit+json" {:bottle/category :foo :count 4}) "UTF-8"))
+
+      (Thread/sleep 100)
+
+      ;; query
+      (unpack-response (client/events client)
+        (is (= 200 status))
+        (is (= ["1"] (keys body)))
+        (let [event (get body "1")]
+          (is (= #{:bottle/id
+                   :bottle/category
+                   :bottle/time
+                   :bottle/closed?
+                   :count}
+                 (set (keys event))))
+          (is (string? (:bottle/id event)))
+          (is (not (:bottle/closed? event)))
+          (is (instance? java.util.Date (:bottle/time event)))
+          (is (= :foo (:bottle/category event)))
+          (is (= 4 (:count event))))))))
+
 (deftest creating-and-querying-events
   (with-system (system/system config)
     (let [host (str "localhost:" port)

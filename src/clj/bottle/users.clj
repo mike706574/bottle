@@ -21,5 +21,5 @@
 
 (defmethod user-manager :default
   [{user-manager-type :bottle/user-manager-type}]
-  (throw (ex-info (str "Invalid user manager type: \"" user-manager-type)
+  (throw (ex-info (str "Invalid user manager type: " (name user-manager-type))
                   {:user-manager-type user-manager-type})))

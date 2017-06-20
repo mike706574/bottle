@@ -1,5 +1,5 @@
 (ns bottle.users.atomic
-  (:require [bottle.users :refer [user-manager]]
+  (:require [bottle.users :as users :refer [user-manager]]
             [buddy.hashers :as hashers])
   (:import [bottle.users UserManager]))
 
@@ -24,6 +24,6 @@
   (let [user-manager (AtomicUserManager. (atom 0) (atom {}))]
     (when-let [users (:bottle/users config)]
       (doseq [[username password] users]
-        (user-manager/add! user-manager {:bottle/username username
-                                         :bottle/password password})))
+        (users/add! user-manager {:bottle/username username
+                                  :bottle/password password})))
     user-manager))
