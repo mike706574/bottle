@@ -44,7 +44,7 @@
 
 (deftest simple-test
   (with-system (system/system config)
-    (let [client (-> {:url (str "http://localhost:" port)
+    (let [client (-> {:host (str "localhost:" port)
                       :content-type content-type}
                      (client/client)
                      (client/authenticate {:bottle/username "mike"
@@ -71,7 +71,7 @@
 
 (deftest messaging
   (with-system (system/system config)
-    (let [client (-> {:url (str "http://localhost:" port)
+    (let [client (-> {:host (str "localhost:" port)
                       :content-type content-type}
                      (client/client)
                      (client/authenticate {:bottle/username "mike"
@@ -115,18 +115,15 @@
 
 (deftest creating-and-querying-events
   (with-system (system/system config)
-    (let [host (str "localhost:" port)
-          http-url (str "http://" host)
-          ws-url (str "ws://" host)
-          client (-> {:url http-url
+    (let [client (-> {:host (str "localhost:" port)
                       :content-type content-type}
                      (client/client)
                      (client/authenticate {:bottle/username "mike"
                                            :bottle/password "rocket"}))
-          all-conn (client/connect! ws-url)
-          foo-conn (client/connect! ws-url :foo)
-          bar-conn (client/connect! ws-url :bar)
-          baz-conn (client/connect! ws-url :baz)
+          all-conn (client/connect client)
+          foo-conn (client/connect-by-category client :foo)
+          bar-conn (client/connect-by-category client :bar)
+          baz-conn (client/connect-by-category client :baz)
           bus (:event-bus system)
           last-event (atom nil)
           last-foo (atom nil)

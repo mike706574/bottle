@@ -33,6 +33,7 @@
                  ;; Web
                  [aleph "0.4.3"]
                  [ring/ring-anti-forgery "1.1.0"]
+                 [ring-cors "0.1.10"]
                  [ring/ring-defaults "0.3.0"]
                  [ring-middleware-format "0.7.2"]
                  [compojure "1.6.0"]

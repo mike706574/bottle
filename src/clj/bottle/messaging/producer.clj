@@ -14,6 +14,6 @@
 
 (s/def :bottle/producer (partial satisfies? Producer))
 
-(s/fdef producer
+#_(s/fdef producer
   :args (s/cat :config :bottle.messaging/config )
   :ret :bottle/producer)

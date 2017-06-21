@@ -67,14 +67,25 @@
    (POST "/api/events" request
          (or (unauthorized request) (create-event deps request)))
    (POST "/api/tokens" request
-         (with-body [credentials :bottle/credentials request]
-           (if-let [user (users/authenticate user-manager credentials)]
-             {:status 201
+         (try
+           (or (not-acceptable request #{"text/plain"})
+               (with-body [credentials :bottle/credentials request]
+                 (if-let [user (users/authenticate user-manager credentials)]
+                   {:status 201
+                    :headers {"Content-Type" "text/plain"}
+                    :body (let [claims {:username (:bottle/username credentials)
+                                        :exp (time/plus (time/now) (time/days 1))}]
+                            (jwt/sign claims secret-key {:alg :hs512}))}
+                   {:status 401})))
+           (catch Exception e
+             (log/error e "An exception was thrown while processing a request.")
+             {:status 500
               :headers {"Content-Type" "text/plain"}
-              :body (let [claims {:username (:bottle/username credentials)
-                                  :exp (time/plus (time/now) (time/days 1))}]
-                      (jwt/sign claims secret-key {:alg :hs512}))}
-             {:status 401})))
-   (GET "/api/websocket" request (websocket/handler deps))
-   (GET "/api/websocket/:category" request (websocket/handler deps))
+              :body "An error occurred."})))
+   (GET "/api/websocket" request
+        (or (unauthorized request)
+            (websocket/handler deps)))
+   (GET "/api/websocket/:category" request
+        (or (unauthorized request)
+            (websocket/handler deps)))
    (route/not-found {:status 404})))

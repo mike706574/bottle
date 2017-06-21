@@ -3,34 +3,38 @@
             [clojure.spec.alpha :as s]
             [taoensso.timbre :as log]))
 
-(def supported-media-types #{"application/edn"
-                             "application/json"
-                             "application/transit+json"
-                             "application/transit+msgpack"})
+(def primary-media-types #{"application/edn"
+                           "application/json"
+                           "application/transit+json"
+                           "application/transit+msgpack"})
 
 (defn unsupported-media-type?
-  [{headers :headers}]
+  [{headers :headers} supported-media-types]
   (if-let [content-type (get headers "content-type")]
     (not (contains? supported-media-types content-type))
     true))
 
 (defn unsupported-media-type
-  [request]
-  (when (unsupported-media-type? request)
-    {:status 415
-     :headers {"Accepts" supported-media-types}}))
+  ([request]
+   (unsupported-media-type request primary-media-types))
+  ([request supported-media-types]
+   (when (unsupported-media-type? request supported-media-types)
+     {:status 415
+      :headers {"Accepts" supported-media-types}})))
 
 (defn not-acceptable?
-  [{headers :headers}]
+  [{headers :headers} supported-media-types]
   (if-let [accept (get headers "accept")]
     (not (contains? supported-media-types accept))
     true))
 
 (defn not-acceptable
-  [request]
-  (when (not-acceptable? request)
-    {:status 406
-     :headers {"Consumes" supported-media-types }}))
+  ([request]
+   (not-acceptable request primary-media-types))
+  ([request supported-media-types]
+   (when (not-acceptable? request supported-media-types)
+     {:status 406
+      :headers {"Consumes" supported-media-types }})))
 
 (defn parsed-body
   [request]
@@ -60,7 +64,6 @@
 (defmacro with-body
   [[body-sym body-spec request] & body]
   `(or (unsupported-media-type ~request)
-       (not-acceptable ~request)
        (let [~body-sym (parsed-body ~request)]
          (if-not ~body-sym
            (body-response 400 ~request {:bottle.server/message "Invalid request body representation."})

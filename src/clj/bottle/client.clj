@@ -30,16 +30,7 @@
       (update response :body (comp (partial message/decode content-type)))
       response)))
 
-(defn connect!
-  ([ws-url]
-   (connect! ws-url nil))
-  ([ws-url category]
-   (let [endpoint-url (str ws-url "/api/websocket")
-         url (if category
-               (str endpoint-url "/" (name category))
-               endpoint-url)
-         conn @(http/websocket-client url)]
-     conn)))
+
 
 (defn transit-get
   [url]
@@ -61,39 +52,63 @@
   (users/add! (:user-manager system) {:bottle/username username
                                              :bottle/password password}))
 
+(defn http-url [host] (str "http://" host))
+(defn ws-url [host] (str "ws://" host))
+
+(defn connect!
+  ([host token]
+   (connect! host token nil))
+  ([host token category]
+   (let [endpoint-url (str (ws-url host) "/api/websocket")
+         url (if category
+               (str endpoint-url "/" (name category))
+               endpoint-url)
+         conn @(http/websocket-client url {:headers {"Authorization" (str "Token " token)}})]
+     conn)))
+
 (defprotocol Client
   (authenticate [this credentials])
+  (connect [this])
+  (connect-by-category [this cateogry])
   (events [this])
   (events-by-category [this category])
   (create-event [this event]))
 
-(defrecord ServiceClient [url content-type token]
+(defrecord ServiceClient [host content-type token]
   Client
   (authenticate [this credentials]
-    (let [response @(http/post (str url "/api/tokens")
+    (println "HOST:" host)
+    (let [response @(http/post (str (http-url host) "/api/tokens")
                                {:headers {"Content-Type" content-type
-                                          "Accept" content-type}
+                                          "Accept" "text/plain"}
                                 :body (message/encode content-type credentials)
                                 :throw-exceptions false})]
       (when (= (:status response) 201)
+        (println "HOWDY PARTNER")
         (assoc this :token (-> response :body slurp)))))
 
+  (connect [this]
+    (connect! host token nil))
+
+  (connect-by-category [this category]
+    (connect! host token category))
+
   (events [this]
-    (parse @(http/get (str url "/api/events")
+    (parse @(http/get (str (http-url host) "/api/events")
                       {:headers {"Content-Type" content-type
                                  "Accept" content-type
                                  "Authorization" (str "Token " token)}
                        :throw-exceptions false})))
 
   (events-by-category [this category]
-    (parse @(http/get (str url "/api/events")
+    (parse @(http/get (str (http-url host) "/api/events")
                       {:headers {"Content-Type" content-type
                                  "Accept" content-type
                                  "Authorization" (str "Token " token)}
                        :query-params {"category" (name category)}
                        :throw-exceptions false})))
   (create-event [this event]
-    (parse @(http/post (str url "/api/events")
+    (parse @(http/post (str (http-url host) "/api/events")
                        {:headers {"Content-Type" content-type
                                   "Accept" content-type
                                   "Authorization" (str "Token " token)}
@@ -101,6 +116,6 @@
                         :throw-exceptions false}))))
 
 (defn client
-  [{:keys [url content-type]}]
-  (map->ServiceClient {:url url
+  [{:keys [host content-type]}]
+  (map->ServiceClient {:host host
                        :content-type content-type}))

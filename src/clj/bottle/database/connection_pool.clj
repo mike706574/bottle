@@ -62,7 +62,6 @@
                 test-connection-on-checkin false
                 test-connection-on-checkout false}
            :as spec} config
-          _           (println excess-timeout)
           ds (doto (ComboPooledDataSource.)
                (.setDriverClass driver-class)
                (.setJdbcUrl (str "jdbc:" subprotocol "://" (if port (str host ":" port) host) "/" database))

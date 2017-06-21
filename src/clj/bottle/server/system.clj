@@ -60,14 +60,7 @@
     (consumer/consumer event-messaging)
     {:handler :event-message-handler}))
 
-(defn initialize
-  [system config]
-  (when-let [users (:bottle/users config)]
-    (doseq [[username password] users]
-      (users/add!
-       (:user-manager system)
-       {:bottle/username username
-        :bottle/password password}))))
+
 
 (defn build
   [config]
@@ -105,8 +98,7 @@
                         (util/pretty validation-failure)))
         (throw (ex-info "Invalid configuration." {:config config
                                                   :validation-failure validation-failure})))
-    (let [system (build config)]
-      (initialize system config))))
+    (build config)))
 
 (s/fdef system
   :args (s/cat :config :bottle/config)
