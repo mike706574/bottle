@@ -13,25 +13,25 @@
 
             [clojure.test :refer [deftest testing is]]
             [com.stuartsierra.component :as component]
-            [manifold.stream :as stream])
+            [manifold.stream :as stream]
+            [bottle.messaging.stream-manager :as stream-manager])
   (:import [bottle.messaging.handler MessageHandler]))
 
 (def queue-name "two-message-test")
 
-(defn system [config deps]
+(defn system [config]
   (let [messages (stream/stream)]
-    (merge deps
-           {:messages messages
-            :consumer (component/using
-                       (consumer/consumer config)
-                       [:handler])
-            :producer (producer/producer config)
-            :handler (reify MessageHandler
-                       (handle-message [_ message]
-                         (stream/put! messages message)))})))
+    {:messages messages
+     :consumer (component/using
+                   (consumer/consumer config)
+                 [:handler])
+     :producer (producer/producer config)
+     :handler (reify MessageHandler
+                (handle-message [_ message]
+                  (stream/put! messages message)))}))
 
-(defn send-two-messages [config deps]
-  (with-system (system config deps)
+(defn send-two-messages [system]
+  (with-system system
     (let [{:keys [messages producer]} system]
       (producer/produce producer "One!")
       (producer/produce producer "Two!")
@@ -40,20 +40,20 @@
 
 (deftest activemq
   (testing "Sending and receiving 2 messages with ActiveMQ."
-    (send-two-messages {:bottle.messaging/broker-type :active-mq
-                        :bottle.messaging/broker-path "tcp://localhost:62626"
-                        :bottle.messaging/queue-name queue-name}
-                       {})))
+    (send-two-messages (system {:bottle.messaging/broker-type :active-mq
+                                :bottle.messaging/broker-path "tcp://localhost:62626"
+                                :bottle.messaging/queue-name queue-name}))))
 
 (deftest rabbitmq
   (testing "Sending and receiving 2 messages with RabbitMQ."
-    (send-two-messages {:bottle.messaging/broker-type :rabbit-mq
-                        :bottle.messaging/broker-path "localhost"
-                        :bottle.messaging/queue-name queue-name}
-                       {})))
-
+    (send-two-messages (system {:bottle.messaging/broker-type :rabbit-mq
+                                :bottle.messaging/broker-path "localhost"
+                                :bottle.messaging/queue-name queue-name}))))
 (deftest stream
   (testing "Sending and receiving 2 messages with a Manifold stream."
-    (send-two-messages {:bottle.messaging/broker-type :stream
-                        :bottle.messaging/stream-id :test-stream}
-                       {:test-stream (stream/stream)})))
+    (let [config {:bottle.messaging/broker-type :stream
+                  :bottle.messaging/stream :test
+                  :bottle/streams [:test]}]
+      (send-two-messages (-> config
+                             (system)
+                             (assoc :stream-manager (stream-manager/stream-manager config)))))))

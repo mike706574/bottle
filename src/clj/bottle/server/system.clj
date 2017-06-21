@@ -11,9 +11,9 @@
 
             ;; TODO
             [bottle.messaging]
-
             [bottle.messaging.consumer [activemq rabbitmq stream]]
             [bottle.messaging.producer [activemq rabbitmq stream]]
+            [bottle.messaging.stream-manager :as stream-manager]
 
             [bottle.server.connection :as conn]
             [bottle.server.handler :as server-handler]
@@ -60,8 +60,6 @@
     (consumer/consumer event-messaging)
     {:handler :event-message-handler}))
 
-
-
 (defn build
   [config]
   (log/info (str "Building " (:bottle/id config) "."))
@@ -82,6 +80,7 @@
    :event-handler (event-handler/event-handler config)
 
    ;; Messaging
+   :stream-manager (stream-manager/stream-manager config)
    :event-message-handler (message-handler/event-message-handler config)
 
    ;; HTTP

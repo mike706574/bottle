@@ -2,11 +2,13 @@
   (:require [bottle.util :as util]
             [bottle.messaging.consumer :refer [consumer]]
             [bottle.messaging.handler :as handler]
+            [bottle.messaging.stream-manager]
             [com.stuartsierra.component :as component]
             [manifold.stream :as stream]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [bottle.messaging.stream-manager :as stream-manager]))
 
-(defrecord StreamConsumer [id handler stream]
+(defrecord StreamConsumer [id handler stream-manager]
   component/Lifecycle
   (start [this]
     (log/debug (str "Starting consumer " id "."))
@@ -17,15 +19,15 @@
          (handler/handle-message handler message)
          (catch Exception e
            (log/error e (str "Exception thrown by message handler.")))))
-     stream)
+     (stream-manager/stream stream-manager id))
     this)
   (stop [this]
     (log/debug (str "Stopping consumer " id "."))
-    (stream/close! stream)
-    (dissoc this stream)))
+    (dissoc this :stream-manager)))
 
 (defmethod consumer :stream
-  [config]
+  [{id :bottle.messaging/stream}]
+  (println "ID:" id)
   (component/using
-   (map->StreamConsumer {:id (util/uuid)})
-   {:stream (:bottle/stream-id config)}))
+   (map->StreamConsumer {:id id})
+    [:stream-manager]))

@@ -35,10 +35,8 @@
 
 (stest/instrument)
 
-(def messaging-config {:bottle.messaging/broker-type :rabbit-mq
-                       :bottle.messaging/broker-path "localhost"
-                       :bottle.messaging/queue-name "bottle-1"
-                       :bottle.messaging/handler :event-message-handler})
+(def messaging-config {:bottle.messaging/broker-type :stream
+                       :bottle.messaging/stream :event})
 
 (def port 8001)
 (def content-type "application/transit+json")
@@ -49,6 +47,7 @@
              :bottle/event-content-type content-type
              :bottle/event-messaging messaging-config
              :bottle/user-manager-type :atomic
+             :bottle/streams [:event]
              :bottle/users {"mike" "rocket"}})
 
 (defonce system nil)
