@@ -78,7 +78,6 @@
 (defrecord ServiceClient [host content-type token]
   Client
   (authenticate [this credentials]
-    (println "HOST:" host)
     (let [response @(http/post (str (http-url host) "/api/tokens")
                                {:headers {"Content-Type" content-type
                                           "Accept" "text/plain"}

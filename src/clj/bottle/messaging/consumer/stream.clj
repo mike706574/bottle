@@ -27,7 +27,6 @@
 
 (defmethod consumer :stream
   [{id :bottle.messaging/stream}]
-  (println "ID:" id)
   (component/using
    (map->StreamConsumer {:id id})
     [:stream-manager]))

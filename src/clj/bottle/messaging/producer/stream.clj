@@ -8,10 +8,7 @@
 (defrecord StreamProducer [id stream-manager]
   Producer
   (produce [this message]
-    (println "THE MANAGER" stream-manager)
     (let [stream (stream-manager/stream stream-manager id)]
-      (println "THE ID:" id)
-      (println "THE STREAM:" stream)
       (stream/put! stream message))))
 
 (defmethod producer :stream
