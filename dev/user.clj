@@ -104,3 +104,14 @@
   []
   (stop)
   (go))
+
+
+(comment
+  (-> {:host (str "localhost:" port)
+       :content-type content-type}
+      (client/client)
+      (client/authenticate {:bottle/username "mike"
+                            :bottle/password "rocket"})
+      (client/create-event {:bottle/category :foo :count 4}))
+
+  )

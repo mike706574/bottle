@@ -44,20 +44,6 @@
             :bottle/time)
     event))
 
-(deftest foo-test
-  (with-system (system/system config)
-    (let [client (-> {:host (str "localhost:" port)
-                      :content-type content-type}
-                     (client/client)
-                     (client/authenticate {:bottle/username "eakrlkawmike"
-                                           :bottle/password "rocket"}))
-          all-conn (client/connect client)]
-      ;; create
-      (unpack-response (client/create-event client {:bottle/category :foo :count 4})
-        (is (= 201 status))
-        (is (string? (:bottle/id body)))
-        (is (instance? java.util.Date (:bottle/time body)))))))
-
 (deftest simple-test
   (with-system (system/system config)
     (let [client (-> {:host (str "localhost:" port)
