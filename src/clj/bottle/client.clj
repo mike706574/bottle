@@ -63,7 +63,8 @@
          url (if category
                (str endpoint-url "/" (name category))
                endpoint-url)
-         conn @(http/websocket-client url {:headers {"Authorization" (str "Token " token)}})]
+         url (str url "?token=" token)
+         conn @(http/websocket-client url)]
      conn)))
 
 (defprotocol Client
@@ -84,7 +85,6 @@
                                 :body (message/encode content-type credentials)
                                 :throw-exceptions false})]
       (when (= (:status response) 201)
-        (println "HOWDY PARTNER")
         (assoc this :token (-> response :body slurp)))))
 
   (connect [this]

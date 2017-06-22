@@ -40,7 +40,6 @@
                  [selmer "1.10.7"]
 
                  ;; Security
-                 [buddy/buddy-auth "1.4.1"]
                  [buddy/buddy-hashers "1.2.0"]
                  [buddy/buddy-sign "1.5.0"]]
   :source-paths ["src/clj" "src/cljc"]

@@ -3,14 +3,13 @@
             [bottle.event-manager :as event-manager]
             [bottle.users :as users]
             [bottle.server.api.websocket :as websocket]
+            [bottle.server.authentication :as auth]
             [bottle.server.http :refer [with-body
                                         handle-exceptions
                                         body-response
                                         not-acceptable
                                         parsed-body
                                         unsupported-media-type]]
-            [buddy.auth :refer [authenticated?]]
-            [buddy.sign.jwt :as jwt]
             [clj-time.core :as time]
             [compojure.core :as compojure :refer [ANY DELETE GET PATCH POST PUT]]
             [compojure.route :as route]
@@ -50,50 +49,38 @@
           (body-response 500 request {:bottle.server/message "An error occurred."})))
       {:bottle.server/message "Invalid request body representation."})))
 
-(defn unauthorized
-  [request]
-  (when-not (authenticated? request)
-    {:status 401}))
-
 (defn routes
-  [{:keys [user-manager secret-key] :as deps}]
-  (compojure/routes
-   (GET "/api/healthcheck" request
-        {:status 200})
-   (GET "/api/events" request
-        (or (unauthorized request) (retrieve-events deps request)))
-   (GET "/api/events/:category" request
-        (or (unauthorized request) (retrieve-events deps request)))
-   (POST "/api/events" request
-         ;; TODO: I can do it myself!
-         (let [token (-> request
-                         :headers
-                         (get "Authorization")
-                         (clojure.string/split #" ")
-                         second)]
-           (println (jwt/unsign token secret-key {:alg :hs512}))
-)
-         (or (unauthorized request) (create-event deps request)))
-   (POST "/api/tokens" request
-         (try
-           (or (not-acceptable request #{"text/plain"})
-               (with-body [credentials :bottle/credentials request]
-                 (if-let [user (users/authenticate user-manager credentials)]
-                   {:status 201
-                    :headers {"Content-Type" "text/plain"}
-                    :body (let [claims {:username (:bottle/username credentials)
-                                        :exp (time/plus (time/now) (time/days 1))}]
-                            (jwt/sign claims secret-key {:alg :hs512}))}
-                   {:status 401})))
-           (catch Exception e
-             (log/error e "An exception was thrown while processing a request.")
-             {:status 500
-              :headers {"Content-Type" "text/plain"}
-              :body "An error occurred."})))
-   (GET "/api/websocket" request
-        (or (unauthorized request)
-            (websocket/handler deps)))
-   (GET "/api/websocket/:category" request
-        (or (unauthorized request)
-            (websocket/handler deps)))
-   (route/not-found {:status 404})))
+  [{:keys [user-manager authenticator] :as deps}]
+  (letfn [(unauthenticated [request]
+            (when-not (auth/authenticated? authenticator request)
+              {:status 401}))]
+    (compojure/routes
+     (GET "/api/healthcheck" request
+          {:status 200})
+     (GET "/api/events" request
+          (or (unauthenticated request) (retrieve-events deps request)))
+     (GET "/api/events/:category" request
+          (or (unauthenticated request) (retrieve-events deps request)))
+     (POST "/api/events" request
+           (or (unauthenticated request) (create-event deps request)))
+     (POST "/api/tokens" request
+           (try
+             (or (not-acceptable request #{"text/plain"})
+                 (with-body [credentials :bottle/credentials request]
+                   (if-let [user (users/authenticate user-manager credentials)]
+                     {:status 201
+                      :headers {"Content-Type" "text/plain"}
+                      :body (auth/token authenticator (:bottle/username credentials))}
+                     {:status 401})))
+             (catch Exception e
+               (log/error e "An exception was thrown while processing a request.")
+               {:status 500
+                :headers {"Content-Type" "text/plain"}
+                :body "An error occurred."})))
+     (GET "/api/websocket" request
+          (or (unauthenticated request)
+              (websocket/handler deps)))
+     (GET "/api/websocket/:category" request
+          (or (unauthenticated request)
+              (websocket/handler deps)))
+     (route/not-found {:status 404}))))

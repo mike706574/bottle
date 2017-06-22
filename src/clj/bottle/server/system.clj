@@ -1,5 +1,6 @@
 (ns bottle.server.system
-  (:require [bottle.event-handler :as event-handler]
+  (:require [bottle.server.authentication :as auth]
+            [bottle.event-handler :as event-handler]
             [bottle.event-manager :as event-manager]
             [bottle.message :as message]
             [bottle.message-handler :as message-handler]
@@ -84,6 +85,7 @@
    :event-message-handler (message-handler/event-message-handler config)
 
    ;; HTTP
+   :authenticator (auth/authenticator config)
    :conn-manager (conn/manager config)
    :handler-factory (server-handler/factory config)
    :app (component/using (service/aleph-service config) [:event-consumer])})
