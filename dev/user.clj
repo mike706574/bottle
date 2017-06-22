@@ -35,8 +35,13 @@
 
 (stest/instrument)
 
-(def messaging-config {:bottle.messaging/broker-type :stream
-                       :bottle.messaging/stream :event})
+(def rabbitmq-config {:bottle.messaging/broker-type :rabbit-mq
+                      :bottle.messaging/broker-path "localhost"
+                      :bottle.messaging/queue-name "bottle-1"
+                      :bottle.messaging/handler :event-message-handler})
+
+(def stream-config {:bottle.messaging/broker-type :stream
+                    :bottle.messaging/stream :event})
 
 (def port 8001)
 (def content-type "application/transit+json")
@@ -44,8 +49,9 @@
 (def config {:bottle/id "bottle-server"
              :bottle/port port
              :bottle/log-path "/tmp"
+             :bottle/secret-key "secret"
              :bottle/event-content-type content-type
-             :bottle/event-messaging messaging-config
+             :bottle/event-messaging stream-config
              :bottle/user-manager-type :atomic
              :bottle/streams [:event]
              :bottle/users {"mike" "rocket"}})

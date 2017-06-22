@@ -65,6 +65,14 @@
    (GET "/api/events/:category" request
         (or (unauthorized request) (retrieve-events deps request)))
    (POST "/api/events" request
+         ;; TODO: I can do it myself!
+         (let [token (-> request
+                         :headers
+                         (get "Authorization")
+                         (clojure.string/split #" ")
+                         second)]
+           (println (jwt/unsign token secret-key {:alg :hs512}))
+)
          (or (unauthorized request) (create-event deps request)))
    (POST "/api/tokens" request
          (try

@@ -13,7 +13,8 @@
             [manifold.stream :as s]
             [taoensso.timbre :as log]))
 
-(def event-messaging {:bottle.messaging/broker-type :rabbit-mq
+(def event-messaging {:bottle.messaging/broker-type :stream
+                      :bottle.messaging/stream :event
                       :bottle.messaging/broker-path "localhost"
                       :bottle.messaging/queue-name "bottle-system-test"})
 
@@ -25,6 +26,7 @@
              :bottle/user-manager-type :atomic
              :bottle/event-content-type content-type
              :bottle/event-messaging event-messaging
+             :bottle/streams [:event]
              :bottle/users {"mike" "rocket"}})
 
 (defmacro unpack-response
@@ -42,6 +44,18 @@
             :bottle/time)
     event))
 
+(deftest foo-test
+  (with-system (system/system config)
+    (let [client (-> {:host (str "localhost:" port)
+                      :content-type content-type}
+                     (client/client)
+                     (client/authenticate {:bottle/username "mike"
+                                           :bottle/password "rocket"}))]
+      ;; create
+      (unpack-response (client/create-event client {:bottle/category :foo :count 4})
+        (is (= 201 status))
+        (is (string? (:bottle/id body)))
+        (is (instance? java.util.Date (:bottle/time body)))))))
 (deftest simple-test
   (with-system (system/system config)
     (let [client (-> {:host (str "localhost:" port)
@@ -69,6 +83,11 @@
         (is (= 200 status))
         (is (= {"1" foo-1} (map-vals purge body)))))))
 
+(defn producer
+  [{stream-manager :stream-manager :as system}]
+  (assoc (producer/producer event-messaging)
+         :stream-manager stream-manager))
+
 (deftest messaging
   (with-system (system/system config)
     (let [client (-> {:host (str "localhost:" port)
@@ -82,7 +101,7 @@
           foo-1 {:bottle/category :foo
                  :bottle/id "1"
                  :count 4}
-          producer (producer/producer event-messaging)]
+          producer (producer system)]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
       (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
@@ -141,7 +160,7 @@
                  :bottle/closed? false
                  :numbers [1 2 3]}
           {:keys [bottle/event-messaging bottle/event-content-type]} config
-          producer (producer/producer event-messaging)]
+          producer (producer system)]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
       (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
