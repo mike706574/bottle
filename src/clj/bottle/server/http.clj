@@ -1,6 +1,7 @@
 (ns bottle.server.http
   (:require [bottle.message :as message]
             [clojure.spec.alpha :as s]
+            [clojure.string :as str]
             [taoensso.timbre :as log]))
 
 (def primary-media-types #{"application/edn"
@@ -20,7 +21,7 @@
   ([request supported-media-types]
    (when (unsupported-media-type? request supported-media-types)
      {:status 415
-      :headers {"Accepts" supported-media-types}})))
+      :headers {"Accepts" (str/join ", " supported-media-types)}})))
 
 (defn not-acceptable?
   [{headers :headers} supported-media-types]
@@ -34,7 +35,7 @@
   ([request supported-media-types]
    (when (not-acceptable? request supported-media-types)
      {:status 406
-      :headers {"Consumes" supported-media-types }})))
+      :headers {"Consumes" (str/join ", " supported-media-types) }})))
 
 (defn parsed-body
   [request]
