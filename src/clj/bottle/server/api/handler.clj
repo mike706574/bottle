@@ -22,10 +22,9 @@
 
 (defn handler
   [deps]
-  (let [secret-key (:secret-key deps)]
-    (-> (api-routes/routes deps)
-        (wrap-cors :access-control-allow-origin [#".*"]
-                   :access-control-allow-methods [:get :put :post :delete])
-        (wrap-params)
-        (wrap-defaults api-defaults)
-        (wrap-logging))))
+  (-> (api-routes/routes deps)
+      (wrap-cors :access-control-allow-origin [#".*"]
+                 :access-control-allow-methods [:get :put :post :delete])
+      (wrap-params)
+      (wrap-defaults api-defaults)
+      (wrap-logging)))
