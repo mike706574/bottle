@@ -18,3 +18,11 @@
      (catch Exception e#
        (log/error e# ~message)
        (throw e#))))
+
+(defn unkeyword
+  [k]
+  (let [kns (namespace k)
+        kn (name k)]
+    (if kns
+      (str kns "/" kn)
+      kn)))
