@@ -45,6 +45,7 @@
 
 (defmethod decode-stream "application/json"
   [_ body]
+  (println body)
   (json/read (io/reader body) :key-fn keyword))
 
 (defmethod decode-stream "text/plain"
