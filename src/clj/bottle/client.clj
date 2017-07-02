@@ -1,7 +1,7 @@
 (ns bottle.client
   (:require [aleph.http :as http]
             [manifold.stream :as s]
-            [bottle.message :as message]
+            [boomerang.message :as message]
             [bottle.users :as users]))
 
 (def content-type "application/transit+json")
@@ -71,6 +71,7 @@
   (authenticate [this credentials])
   (connect [this])
   (connect-by-category [this cateogry])
+  (categories [this])
   (events [this])
   (events-by-category [this category])
   (create-event [this event]))
@@ -91,6 +92,13 @@
 
   (connect-by-category [this category]
     (connect! host token category))
+
+  (categories [this]
+    (parse @(http/get (str (http-url host) "/api/categories")
+                      {:headers {"Content-Type" content-type
+                                 "Accept" content-type
+                                 "Authorization" (str "Token " token)}
+                       :throw-exceptions false})))
 
   (events [this]
     (parse @(http/get (str (http-url host) "/api/events")

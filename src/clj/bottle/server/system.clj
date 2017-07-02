@@ -1,8 +1,9 @@
 (ns bottle.server.system
-  (:require [bottle.server.authentication :as auth]
+  (:require [boomerang.message :as message]
+            [bottle.server.authentication :as auth]
             [bottle.event-handler :as event-handler]
             [bottle.event-manager :as event-manager]
-            [bottle.message :as message]
+
             [bottle.message-handler :as message-handler]
             [bottle.notification :as notification]
             [bottle.users :as users]

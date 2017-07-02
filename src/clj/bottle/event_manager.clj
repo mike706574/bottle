@@ -7,12 +7,15 @@
 (defprotocol EventManager
   "Manages events."
   (events [this] "Retrieve all events.")
+  (categories [this] "Retrives all categories.")
   (add! [this data] "Add an event."))
 
 (defrecord RefEventManager [counter events]
   EventManager
   (events [this]
     @events)
+  (categories [this]
+    (set (map :bottle/category (vals @events))))
   (add! [this template]
     (dosync
      (let [id (str (alter counter inc))

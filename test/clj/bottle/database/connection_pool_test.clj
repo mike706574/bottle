@@ -10,14 +10,15 @@
     (is (= [{:?column? 1}] (jdbc/query component ["select 1"])))
     (is (= [{:?column? 2}] (jdbc/query component ["select 2"])))))
 
-(deftest mysql-connection-pool
-  (test-pool #:bottle.database{:driver-class "com.mysql.cj.jdbc.Driver"
-                               :subprotocol "mysql"
-                               :host "localhost"
-                               :porr 3306
-                               :database "mysql"
-                               :username "mysql"
-                               :password "mysql"}))
+
+#_(deftest mysql-connection-pool
+    (test-pool #:bottle.database{:driver-class "com.mysql.jdbc.Driver"
+                                 :subprotocol "mysql"
+                                 :host "localhost"
+                                 :port 3306
+                                 :database "mysql"
+                                 :username "mysql"
+                                 :password "mysql"}))
 
 (deftest postgres-connection-pool
   (test-pool #:bottle.database{:driver-class "org.postgresql.Driver"

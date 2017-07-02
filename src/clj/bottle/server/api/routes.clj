@@ -4,12 +4,12 @@
             [bottle.users :as users]
             [bottle.server.api.websocket :as websocket]
             [bottle.server.authentication :as auth]
-            [bottle.server.http :refer [with-body
-                                        handle-exceptions
-                                        body-response
-                                        not-acceptable
-                                        parsed-body
-                                        unsupported-media-type]]
+            [boomerang.http :refer [with-body
+                                    handle-exceptions
+                                    body-response
+                                    not-acceptable
+                                    parsed-body
+                                    unsupported-media-type]]
             [clj-time.core :as time]
             [compojure.core :as compojure :refer [ANY DELETE GET PATCH POST PUT]]
             [compojure.route :as route]
@@ -38,6 +38,13 @@
               response (into {} (filter matches? events))]
           (body-response 200 request response)))))
 
+(defn retrieve-categories
+  [{:keys [event-manager]} request]
+  (handle-exceptions request
+    (or (unsupported-media-type request)
+        (let [categories (event-manager/categories event-manager)]
+          (body-response 200 request categories)))))
+
 (defn create-event
   [{:keys [event-handler]} request]
   (handle-exceptions request
@@ -57,6 +64,8 @@
     (compojure/routes
      (GET "/api/healthcheck" request
           {:status 200})
+     (GET "/api/categories" request
+          (or (unauthenticated request) (retrieve-categories deps request)))
      (GET "/api/events" request
           (or (unauthenticated request) (retrieve-events deps request)))
      (GET "/api/events/:category" request

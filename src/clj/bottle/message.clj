@@ -1,11 +1,13 @@
 (ns bottle.message
-  (:require [clojure.data.json :as json]
-            [clojure.java.io :as io]
+  (:require [bottle.util :as util]
+            [clojure.data.json :as json]
             [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.spec.alpha :as s]
             [cognitect.transit :as transit]))
 
-(def supported-content-type #{"application/edn"
+(def supported-content-type #{"text/plain"
+                              "application/edn"
                               "application/json"
                               "application/transit+json"
                               "application/transit+msgpack"})
@@ -26,8 +28,7 @@
                :body any?)
   :ret byte-array?)
 
-(defmulti ^:private decode-stream
-  "Encodes the string using the given content-type."
+(defmulti decode-stream
   (fn [content-type body] content-type))
 
 (defmethod decode-stream "application/edn"
@@ -46,21 +47,18 @@
   [_ body]
   (json/read (io/reader body) :key-fn keyword))
 
+(defmethod decode-stream "text/plain"
+  [_ body]
+  (slurp body))
+
 (defmethod decode-stream :default
   [content-type body]
   (throw (ex-info (str "Content type \"" content-type "\" is not supported.")
                   {:body body
                    :content-type content-type})))
 
-(defn ^:private decode-string
-  [content-type body]
-  (decode-stream content-type ))
-
-(defn ^:private decode-bytes
-  [content-type body]
-  (decode-stream content-type ))
-
 (defn decode
+  "Decodes body using the given content type content-type."
   [content-type body]
   (decode-stream
    content-type
@@ -77,12 +75,16 @@
                       :body body})))))
 
 (defmulti encode
-  "Encodes the string using the given content-type."
+  "Encodes body using the given content-type content-type."
   (fn [content-type body] content-type))
+
+(defmethod encode "text/plain"
+  [_ body]
+  (.getBytes (util/pretty body)))
 
 (defmethod encode "application/json"
   [_ body]
-  (.getBytes (json/write-str body)))
+  (.getBytes (json/write-str body :key-fn util/unkeyword)))
 
 (defmethod encode "application/edn"
   [_ body]

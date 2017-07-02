@@ -38,11 +38,11 @@
       (is (= "One!" @(stream/try-take! messages :drained-1 500 :timeout-1)))
       (is (= "Two!" @(stream/try-take! messages :drained-2 500 :timeout-2))))))
 
-(deftest activemq
-  (testing "Sending and receiving 2 messages with ActiveMQ."
-    (send-two-messages (system {:bottle.messaging/broker-type :active-mq
-                                :bottle.messaging/broker-path "tcp://localhost:62626"
-                                :bottle.messaging/queue-name queue-name}))))
+#_(deftest activemq
+    (testing "Sending and receiving 2 messages with ActiveMQ."
+      (send-two-messages (system {:bottle.messaging/broker-type :active-mq
+                                  :bottle.messaging/broker-path "tcp://localhost:62626"
+                                  :bottle.messaging/queue-name queue-name}))))
 
 (deftest rabbitmq
   (testing "Sending and receiving 2 messages with RabbitMQ."

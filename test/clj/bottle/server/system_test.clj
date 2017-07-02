@@ -159,6 +159,10 @@
         (is (= 200 status))
         (is (= {} (map-vals purge body))))
 
+      (unpack-response (client/categories client)
+        (is (= 200 status))
+        (is (= #{} body)))
+
       ;; create
       (unpack-response (client/create-event client {:bottle/category :foo :count 4})
         (is (= 201 status))
@@ -177,6 +181,9 @@
       (is (nil? @last-bar))
 
       ;; query
+      (unpack-response (client/categories client)
+        (is (= 200 status))
+        (is (= #{:foo} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
         (is (= {"1" foo-1} (map-vals purge body))))
@@ -218,6 +225,9 @@
       (is (= bar-2 (purge @last-bar)))
 
       ;; query
+      (unpack-response (client/categories client)
+        (is (= 200 status))
+        (is (= #{:foo :bar} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
         (is (= {"1" foo-1  "2" bar-2 "3" foo-3} (map-vals purge body))))
@@ -240,6 +250,9 @@
       (is (= baz-4 (purge (client/receive! baz-conn))))
 
       ;; query
+      (unpack-response (client/categories client)
+        (is (= 200 status))
+        (is (= #{:foo :bar :baz} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
         (is (= {"1" foo-1  "2" bar-2 "3" foo-3 "4" baz-4} (map-vals purge body))))

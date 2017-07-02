@@ -1,11 +1,11 @@
 (ns bottle.server.api.websocket
   (:require [aleph.http :as http]
+            [boomerang.message :as message]
+            [bottle.server.connection :as conn]
             [bottle.util :as util]
             [manifold.stream :as s]
             [manifold.deferred :as d]
             [manifold.bus :as bus]
-            [bottle.server.connection :as conn]
-            [bottle.message :as message]
             [taoensso.timbre :as log]))
 
 (defn non-websocket-response

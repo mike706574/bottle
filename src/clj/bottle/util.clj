@@ -18,3 +18,15 @@
      (catch Exception e#
        (log/error e# ~message)
        (throw e#))))
+
+(defn unkeyword
+  [k]
+  (cond
+    (string? k) k
+    (keyword? k) (let [kns (namespace k)
+                       kn (name k)]
+                   (if kns
+                     (str kns "/" kn)
+                     kn))
+    :else (throw (ex-info (str "Invalid key: " k) {:key k
+                                                   :class (class k)}))))
