@@ -92,4 +92,5 @@
      (GET "/api/websocket/:category" request
           (or (unauthenticated request)
               (websocket/handler deps)))
+     ;; TODO: Return proper accept type?
      (route/not-found {:status 404}))))
