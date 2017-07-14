@@ -86,11 +86,9 @@
                {:status 500
                 :headers {"Content-Type" "text/plain"}
                 :body "An error occurred."})))
-     (GET "/api/websocket" request
-          (or (unauthenticated request)
-              (websocket/handler deps)))
-     (GET "/api/websocket/:category" request
-          (or (unauthenticated request)
-              (websocket/handler deps)))
+     (GET "/api/websocket" []
+          (websocket/handler deps))
+     (GET "/api/websocket/:category" []
+          (websocket/handler deps))
      ;; TODO: Return proper accept type?
      (route/not-found {:status 404}))))

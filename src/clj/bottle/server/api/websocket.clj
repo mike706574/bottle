@@ -11,7 +11,7 @@
 (defn non-websocket-response
   []
   {:status 400
-   :headers {"content-type" "application/text"}
+   :headers {"content-type" "text/plain"}
    :body "Expected a websocket request."})
 
 (defn handle
