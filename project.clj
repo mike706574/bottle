@@ -8,6 +8,7 @@
                  [org.clojure/spec.alpha "0.1.123"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/core.async "0.3.443"]
+                 [org.clojure/core.match "0.2.2"]
                  [com.stuartsierra/component "0.3.2"]
 
                  ;; Utility

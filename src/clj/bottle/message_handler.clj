@@ -1,5 +1,5 @@
 (ns bottle.message-handler
-  (:require [bottle.message :as message]
+  (:require [boomerang.message :as message]
             [bottle.messaging.handler :as handler]
             [bottle.event-handler :as event-handler]
             [clojure.spec.alpha :as s]

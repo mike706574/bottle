@@ -11,32 +11,21 @@
                                     parsed-body
                                     unsupported-media-type]]
             [clj-time.core :as time]
+            [clojure.walk :as walk]
             [compojure.core :as compojure :refer [ANY DELETE GET PATCH POST PUT]]
             [compojure.route :as route]
             [taoensso.timbre :as log]))
 
-(defmulti event-clause key)
-
-(defmethod event-clause :category category-clause
-  [[_ category]]
-  (fn [[_ event]]
-    (= (keyword category) (:bottle/category event))))
-
-(defmethod event-clause :default unsupported-param [_] nil)
-
-(defn event-predicate
-  [params]
-  (apply every-pred (into (list (constantly true))
-                          (filter identity (map event-clause params)))))
-
 (defn retrieve-events
   [{:keys [event-manager]} request]
+  (println "CALLED RETRIEVE EVENTS")
   (handle-exceptions request
     (or (unsupported-media-type request)
-        (let [events (event-manager/events event-manager)
-              matches? (event-predicate (:params request))
-              response (into {} (filter matches? events))]
-          (body-response 200 request response)))))
+        (println (:query-params request))
+        (let [events (event-manager/events event-manager (-> request
+                                                             :query-params
+                                                             walk/keywordize-keys))]
+          (body-response 200 request events)))))
 
 (defn retrieve-categories
   [{:keys [event-manager]} request]
@@ -68,8 +57,6 @@
           (or (unauthenticated request) (retrieve-categories deps request)))
      (GET "/api/events" request
           (or (unauthenticated request) (retrieve-events deps request)))
-     (GET "/api/events/:category" request
-          (or (unauthenticated request) (retrieve-events deps request)))
      (POST "/api/events" request
            (or (unauthenticated request) (create-event deps request)))
      (POST "/api/tokens" request
@@ -82,7 +69,7 @@
                       :body (auth/token authenticator (:bottle/username credentials))}
                      {:status 401})))
              (catch Exception e
-               (log/error e "An exception was thrown while processing a request.")
+               (log/error e "An exception was thrown while attempting to generate a token.")
                {:status 500
                 :headers {"Content-Type" "text/plain"}
                 :body "An error occurred."})))

@@ -31,7 +31,8 @@
              (fn [event]
                (util/log-exceptions
                 (str conn-label "Failed to send event:\n" (util/pretty event))
-                (s/put! conn (message/encode event-content-type event))))
+                (let [message (message/encode event-content-type event)]
+                  (s/put! conn (String. message "UTF-8")))))
              conn)
             {:status 101}
             (catch Exception e

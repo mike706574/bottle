@@ -28,7 +28,7 @@
    [bottle.client :as client]
    [bottle.users :as users]
    [bottle.server.system :as system]
-   [bottle.message :as message]
+   [boomerang.message :as message]
    [bottle.messaging.producer :as producer]))
 
 (log/set-level! :trace)

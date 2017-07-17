@@ -2,7 +2,7 @@
   (:require [aleph.http :as http]
             [bottle.client :as client]
             [bottle.macros :refer [with-system]]
-            [bottle.message :as message]
+            [boomerang.message :as message]
             [bottle.messaging.producer :as producer]
             [bottle.server.system :as system]
             [bottle.util :as util :refer [map-vals]]
@@ -39,10 +39,12 @@
 
 (defn purge [event]
   (if (map? event)
-    (dissoc event
-            :bottle/id
-            :bottle/time)
+    (dissoc event :bottle/id :bottle/time)
     event))
+
+(defn purge-events
+  [body]
+  (into #{} (map purge body)))
 
 (deftest simple-test
   (with-system (system/system config)
@@ -64,12 +66,13 @@
         (is (= 201 status))
         (is (string? (:bottle/id body)))
         (is (instance? java.util.Date (:bottle/time body)))
-        (is (= foo-1 (purge body))))
+        (is (= foo-1 (purge body)))
 
-      ;; query
-      (unpack-response (client/events client)
-        (is (= 200 status))
-        (is (= {"1" foo-1} (map-vals purge body)))))))
+        (let [id (:bottle/id body)]
+          (unpack-response (client/events client)
+            (is (= 200 status))
+            (is (= #{foo-1} (purge-events body)))
+            (is (= id (:bottle/id (first body))))))))))
 
 (defn producer
   [{stream-manager :stream-manager :as system}]
@@ -97,7 +100,7 @@
       ;; query
       (unpack-response (client/events client)
         (is (= 200 status))
-        (is (= {} body)))
+        (is (= [] body)))
 
       (producer/produce producer (String. (message/encode "application/transit+json" {:bottle/category :foo :count 4}) "UTF-8"))
 
@@ -106,8 +109,8 @@
       ;; query
       (unpack-response (client/events client)
         (is (= 200 status))
-        (is (= ["1"] (keys body)))
-        (let [event (get body "1")]
+        (is (= 1 (count body)))
+        (let [event (first body)]
           (is (= #{:bottle/id
                    :bottle/category
                    :bottle/time
@@ -186,13 +189,13 @@
         (is (= #{:foo} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
-        (is (= {"1" foo-1} (map-vals purge body))))
+        (is (= #{foo-1} (purge-events body))))
       (unpack-response (client/events-by-category client :bar)
         (is (= 200 status))
-        (is (= {} body)))
+        (is (= #{} (purge-events body))))
       (unpack-response (client/events-by-category client :foo)
         (is (= 200 status))
-        (is (= {"1" foo-1} (map-vals purge body))))
+        (is (= #{foo-1} (purge-events body))))
 
       ;; create
       (unpack-response (client/create-event client {:bottle/category :bar :name "Bob"})
@@ -230,13 +233,13 @@
         (is (= #{:foo :bar} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
-        (is (= {"1" foo-1  "2" bar-2 "3" foo-3} (map-vals purge body))))
+        (is (= #{foo-1 bar-2 foo-3} (purge-events body))))
       (unpack-response (client/events-by-category client :bar)
         (is (= 200 status))
-        (is (= {"2" bar-2} (map-vals purge body))))
+        (is (= #{ bar-2} (purge-events body))))
       (unpack-response (client/events-by-category client :foo)
         (is (= 200 status))
-        (is (= {"1" foo-1 "3" foo-3} (map-vals purge body))))
+        (is (= #{foo-1 foo-3} (purge-events body))))
 
       ;; create via message
       (producer/produce producer (String. (message/encode "application/transit+json" baz-4) "UTF-8"))
@@ -255,13 +258,13 @@
         (is (= #{:foo :bar :baz} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
-        (is (= {"1" foo-1  "2" bar-2 "3" foo-3 "4" baz-4} (map-vals purge body))))
+        (is (= #{foo-1 bar-2 foo-3 baz-4} (purge-events body))))
       (unpack-response (client/events-by-category client :bar)
         (is (= 200 status))
-        (is (= {"2" bar-2} (map-vals purge body))))
+        (is (= #{bar-2} (purge-events body))))
       (unpack-response (client/events-by-category client :foo)
         (is (= 200 status))
-        (is (= {"1" foo-1 "3" foo-3} (map-vals purge body))))
+        (is (= #{foo-1 foo-3} (purge-events body))))
       (unpack-response (client/events-by-category client :baz)
         (is (= 200 status))
-        (is (= {"4" baz-4} (map-vals purge body)))))))
+        (is (= #{baz-4} (purge-events body)))))))

@@ -1,6 +1,6 @@
 (ns bottle.notification
   (:require [bottle.util :as util]
-            [bottle.message :as message]
+            [boomerang.message :as message]
             [bottle.messaging.handler :as handler]
             [com.stuartsierra.component :as component]
             [manifold.bus :as bus]
