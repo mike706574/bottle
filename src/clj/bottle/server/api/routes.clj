@@ -18,10 +18,8 @@
 
 (defn retrieve-events
   [{:keys [event-manager]} request]
-  (println "CALLED RETRIEVE EVENTS")
   (handle-exceptions request
     (or (unsupported-media-type request)
-        (println (:query-params request))
         (let [events (event-manager/events event-manager (-> request
                                                              :query-params
                                                              walk/keywordize-keys))]
