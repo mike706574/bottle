@@ -43,6 +43,16 @@
           (body-response 500 request {:bottle.server/message "An error occurred."})))
       {:bottle.server/message "Invalid request body representation."})))
 
+(defn close-event
+  [{:keys [event-handler]} request]
+  (handle-exceptions request
+    (if-let [id (get-in request [:params :id])]
+      (if-let [closed-event (event-handler/close-event event-handler id)]
+        (body-response 200 request closed-event)
+        (body-response 404 request {:bottle.server/message (str "Event " id " not found.")}))
+      (body-response 400 {:bottle.server/message "No event ID provided."}))
+    {:bottle.server/message "Invalid request body representation."}))
+
 (defn routes
   [{:keys [user-manager authenticator] :as deps}]
   (letfn [(unauthenticated [request]
@@ -57,6 +67,8 @@
           (or (unauthenticated request) (retrieve-events deps request)))
      (POST "/api/events" request
            (or (unauthenticated request) (create-event deps request)))
+     (PATCH "/api/events/:id" request
+            (or (unauthenticated request) (close-event deps request)))
      (POST "/api/tokens" request
            (try
              (or (not-acceptable request #{"text/plain"})

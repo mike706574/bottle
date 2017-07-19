@@ -8,7 +8,8 @@
 
 (defprotocol EventHandler
   "Handles events."
-  (handle-event [this event] "Handles the given event."))
+  (handle-event [this event] "Handles the given event.")
+  (close-event [this id] "Closes an event."))
 
 (defrecord BasicEventHandler [manager bus function]
   EventHandler
@@ -25,15 +26,24 @@
         (let [event (->> event
                          (event-manager/add! manager)
                          (function))]
-          (log/trace (str "Publishing event:\n"
-                          (util/pretty event)))
+          (log/trace (str "Publishing event creation:\n" (util/pretty event)))
           (bus/publish! bus :all event)
           (bus/publish! bus (:bottle/category event) event)
           {:status :ok :event event}))
       (catch Exception e
         (log/error e (str "Exception thrown while processing event:\n"
                           event))
-        {:status :exception}))))
+        {:status :exception})))
+  (close-event [this id]
+    (if-let [event (event-manager/close! event-manager id)]
+      (do
+        (log/trace (str "Closed event:\n" (util/pretty event)) )
+        ;; Publish to all
+        ;; Publish to category bus
+        {:status :ok})
+      {:status :missing}
+      )
+    ))
 
 (defn event-handler
   [config]

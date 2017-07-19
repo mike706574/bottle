@@ -9,7 +9,7 @@
   (events [this] [this options] "Retrieves events")
   (page [this page-size page-number] "TODO")
   (categories [this] "Retrieves all categories.")
-  (close! [this date] "Closes an event.")
+  (close! [this id] "Closes an event.")
   (add! [this data] "Add an event."))
 
 (def date-comparator #(compare (:bottle/time %1) (:bottle/time %2)))
@@ -54,7 +54,8 @@
   (close! [this id]
     (dosync
      (when (contains? @events id)
-       (alter events assoc-in [id :bottle/closed?] true))))
+       (alter events assoc-in [id :bottle/closed?] true)
+       (get @events id))))
 
   (add! [this template]
     (dosync
