@@ -42,6 +42,11 @@
     (dissoc event :bottle/id :bottle/time)
     event))
 
+(defn purge-message [message]
+  (if (= :timeout message)
+    message
+    (update message :bottle/event purge)))
+
 (defn purge-events
   [body]
   (into #{} (map purge body)))
@@ -140,16 +145,20 @@
           last-bar (atom nil)
           foo-1 {:bottle/category :foo
                  :bottle/closed? false
-                 :count 4 }
+                 :count 4}
+          foo-1-created {:bottle/message-type :created :bottle/event foo-1}
           bar-2 {:bottle/category :bar
                  :bottle/closed? false
                  :name "Bob"}
+          bar-2-created {:bottle/message-type :created :bottle/event bar-2} 
           foo-3 {:bottle/category :foo
                  :bottle/closed? false
                  :count 15}
+          foo-3-created {:bottle/message-type :created :bottle/event foo-3} 
           baz-4 {:bottle/category :baz
                  :bottle/closed? false
                  :numbers [1 2 3]}
+          baz-4-created {:bottle/message-type :created :bottle/event baz-4} 
           {:keys [bottle/event-messaging bottle/event-content-type]} config
           producer (producer system)]
 
@@ -174,13 +183,14 @@
         (is (= foo-1 (purge body))))
 
       ;; websockets
-      (is (= foo-1 (purge (client/receive! all-conn))))
-      (is (= foo-1 (purge (client/receive! foo-conn))))
+      (is (= foo-1-created (purge-message (client/receive! all-conn))))
+      (is (= foo-1-created (purge-message (client/receive! foo-conn))))
       (is (= :timeout (purge (client/receive! bar-conn))))
 
-      ;; bus
-      (is (= foo-1 (purge @last-event)))
-      (is (= foo-1 (purge @last-foo)))
+        ;; bus
+
+      (is (= foo-1-created (purge-message @last-event)))
+      (is (= foo-1-created (purge-message @last-foo)))
       (is (nil? @last-bar))
 
       ;; query
@@ -203,14 +213,14 @@
         (is (= bar-2 (purge body))))
 
       ;; websockets
-      (is (= bar-2 (purge (client/receive! all-conn))))
-      (is (= :timeout (purge (client/receive! foo-conn))))
-      (is (= bar-2 (purge (client/receive! bar-conn))))
+      (is (= bar-2-created (purge-message (client/receive! all-conn))))
+      (is (= :timeout (purge-message (client/receive! foo-conn))))
+      (is (= bar-2-created (purge-message (client/receive! bar-conn))))
 
       ;; bus
-      (is (= bar-2 (purge @last-event)))
-      (is (= foo-1 (purge @last-foo)))
-      (is (= bar-2 (purge @last-bar)))
+      (is (= bar-2-created (purge-message @last-event)))
+      (is (= foo-1-created (purge-message @last-foo)))
+      (is (= bar-2-created (purge-message @last-bar)))
 
       ;; create
       (unpack-response (client/create-event client {:bottle/category :foo :count 15})
@@ -218,14 +228,14 @@
         (is (= foo-3 (purge body))))
 
       ;; websockets
-      (is (= foo-3 (purge (client/receive! all-conn))))
-      (is (= foo-3 (purge (client/receive! foo-conn))))
-      (is (= :timeout (purge (client/receive! bar-conn))))
+      (is (= foo-3-created (purge-message (client/receive! all-conn))))
+      (is (= foo-3-created (purge-message (client/receive! foo-conn))))
+      (is (= :timeout (purge-message (client/receive! bar-conn))))
 
       ;; bus
-      (is (= foo-3 (purge @last-event)))
-      (is (= foo-3 (purge @last-foo)))
-      (is (= bar-2 (purge @last-bar)))
+      (is (= foo-3-created (purge-message @last-event)))
+      (is (= foo-3-created (purge-message @last-foo)))
+      (is (= bar-2-created (purge-message @last-bar)))
 
       ;; query
       (unpack-response (client/categories client)
@@ -247,10 +257,10 @@
       (Thread/sleep 1000)
 
       ;; websockets
-      (is (= baz-4 (purge (client/receive! all-conn))))
-      (is (= :timeout (purge (client/receive! foo-conn))))
-      (is (= :timeout (purge (client/receive! bar-conn))))
-      (is (= baz-4 (purge (client/receive! baz-conn))))
+      (is (= baz-4-created (purge-message (client/receive! all-conn))))
+      (is (= :timeout (purge-message (client/receive! foo-conn))))
+      (is (= :timeout (purge-message (client/receive! bar-conn))))
+      (is (= baz-4-created (purge-message (client/receive! baz-conn))))
 
       ;; query
       (unpack-response (client/categories client)
@@ -268,3 +278,42 @@
       (unpack-response (client/events-by-category client :baz)
         (is (= 200 status))
         (is (= #{baz-4} (purge-events body)))))))
+
+(deftest closing-event
+  (with-system (system/system config)
+    (let [client (-> {:host (str "localhost:" port)
+                      :content-type content-type}
+                     (client/client)
+                     (client/authenticate {:bottle/username "mike"
+                                           :bottle/password "rocket"}))
+          foo-1 {:bottle/category :foo
+                 :bottle/closed? false
+                 :count 4}]
+      ;; query
+      (unpack-response (client/events client)
+        (is (= 200 status))
+        (is (= {} (map-vals purge body))))
+
+      ;; create
+      (unpack-response (client/create-event client {:bottle/category :foo :count 4})
+        (is (= 201 status))
+        (is (string? (:bottle/id body)))
+        (is (instance? java.util.Date (:bottle/time body)))
+        (is (= foo-1 (purge body)))
+
+        (let [id (:bottle/id body)]
+          (unpack-response (client/events client)
+            (is (= 200 status))
+            (is (= #{foo-1} (purge-events body)))
+            (is (= id (:bottle/id (first body)))))
+
+          (unpack-response (client/close-event client id)
+            (is (= 200 status))
+            (is (= (assoc foo-1 :bottle/closed? true) (purge body))))
+
+          (unpack-response (client/event client id)
+            (is (= 200 status))
+            (is (= (assoc foo-1 :bottle/closed? true) (purge body))))
+
+
+          )))))

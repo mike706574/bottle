@@ -6,7 +6,8 @@
 
 (defprotocol EventManager
   "Manages events."
-  (events [this] [this options] "Retrieves events")
+  (event [this id] "Retrieves an event.")
+  (events [this] [this options] "Retrieves events.")
   (page [this page-size page-number] "TODO")
   (categories [this] "Retrieves all categories.")
   (close! [this id] "Closes an event.")
@@ -39,6 +40,9 @@
 
 (defrecord RefEventManager [counter events]
   EventManager
+  (event [this id]
+    (get @events id))
+
   (events [this]
     @events)
 

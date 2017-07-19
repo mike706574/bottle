@@ -1,5 +1,5 @@
 (ns bottle.server.api.routes
-  (:require [bottle.event-handler :as handler]
+  (:require [bottle.event-handler :as event-handler]
             [bottle.event-manager :as event-manager]
             [bottle.users :as users]
             [bottle.server.api.websocket :as websocket]
@@ -12,6 +12,7 @@
                                     unsupported-media-type]]
             [clj-time.core :as time]
             [clojure.walk :as walk]
+            [clojure.spec.alpha :as s]
             [compojure.core :as compojure :refer [ANY DELETE GET PATCH POST PUT]]
             [compojure.route :as route]
             [taoensso.timbre :as log]))
@@ -35,23 +36,40 @@
 (defn create-event
   [{:keys [event-handler]} request]
   (handle-exceptions request
+    ;; TODO: Why not use with-body?
     (if-let [event (parsed-body request)]
-      (let [{:keys [status event validation-failure]} (handler/handle-event event-handler event)]
+      (let [{:keys [status event validation-failure]} (event-handler/handle-event event-handler event)]
         (case status
           :ok (body-response 201 request event)
           :invalid (body-response 400 request validation-failure)
           (body-response 500 request {:bottle.server/message "An error occurred."})))
-      {:bottle.server/message "Invalid request body representation."})))
+      (body-response 400 request {:bottle.server/message "Invalid request body representation."}))))
+
+(s/def :bottle/operation #{"close"})
+(s/def :bottle/patch (s/keys :req [:bottle/operation]))
 
 (defn close-event
   [{:keys [event-handler]} request]
   (handle-exceptions request
     (if-let [id (get-in request [:params :id])]
-      (if-let [closed-event (event-handler/close-event event-handler id)]
-        (body-response 200 request closed-event)
+      (with-body [patch :bottle/patch request]
+        (let [operation (:bottle/operation patch)]
+          (case operation
+            "close" (let [{:keys [status event]} (event-handler/close-event event-handler id)]
+                      (case status
+                        :ok (body-response 200 request event)
+                        :missing (body-response 404 request {:bottle.server/message (str "Event " id " not found.")})
+                        (body-response 500 request "An error occurred."))))))
+      (body-response 400 {:bottle.server/message "No event ID provided."}))))
+
+(defn get-event
+  [{:keys [event-manager]} request]
+  (handle-exceptions request
+    (if-let [id (get-in request [:params :id])]
+      (if-let [event (event-manager/event event-manager id)]
+        (body-response 200 request event)
         (body-response 404 request {:bottle.server/message (str "Event " id " not found.")}))
-      (body-response 400 {:bottle.server/message "No event ID provided."}))
-    {:bottle.server/message "Invalid request body representation."}))
+      (body-response 400 {:bottle.server/message "No event ID provided."}))))
 
 (defn routes
   [{:keys [user-manager authenticator] :as deps}]
@@ -63,6 +81,8 @@
           {:status 200})
      (GET "/api/categories" request
           (or (unauthenticated request) (retrieve-categories deps request)))
+     (GET "/api/events/:id" request
+          (or (unauthenticated request) (get-event deps request)))
      (GET "/api/events" request
           (or (unauthenticated request) (retrieve-events deps request)))
      (POST "/api/events" request

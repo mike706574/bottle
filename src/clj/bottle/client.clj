@@ -26,11 +26,13 @@
 (defn parse
   [response]
   (let [response-content-type (get-in response [:headers "content-type"])]
+    (println "RESPONSE:" response-content-type)
+    (println "RESPONSEeawklj:" content-type)
     (if (and (contains? response :body) (= response-content-type content-type))
-      (update response :body (comp (partial message/decode content-type)))
-      response)))
-
-
+      (do (println "YES")
+        (update response :body (comp (partial message/decode content-type))))
+      (do (println "NO")
+        response))))
 
 (defn transit-get
   [url]
@@ -72,9 +74,11 @@
   (connect [this])
   (connect-by-category [this cateogry])
   (categories [this])
+  (event [this id])
   (events [this])
   (events-by-category [this category])
-  (create-event [this event]))
+  (create-event [this event])
+  (close-event [this id]))
 
 (defrecord ServiceClient [host content-type token]
   Client
@@ -100,6 +104,13 @@
                                  "Authorization" (str "Token " token)}
                        :throw-exceptions false})))
 
+  (event [this id]
+    (parse @(http/get (str (http-url host) "/api/events/" id)
+                      {:headers {"Content-Type" content-type
+                                 "Accept" content-type
+                                 "Authorization" (str "Token " token)}
+                       :throw-exceptions false})))
+  
   (events [this]
     (parse @(http/get (str (http-url host) "/api/events")
                       {:headers {"Content-Type" content-type
@@ -120,7 +131,15 @@
                                   "Accept" content-type
                                   "Authorization" (str "Token " token)}
                         :body (message/encode content-type event)
-                        :throw-exceptions false}))))
+                        :throw-exceptions false})))
+
+  (close-event [this id]
+    (parse @(http/patch (str (http-url host) "/api/events/" (name id))
+                        {:headers {"Content-Type" content-type
+                                   "Accept" content-type
+                                   "Authorization" (str "Token " token)}
+                         :body (message/encode content-type {:bottle/operation "close"})
+                         :throw-exceptions false}))))
 
 (defn client
   [{:keys [host content-type]}]

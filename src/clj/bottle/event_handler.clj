@@ -11,6 +11,13 @@
   (handle-event [this event] "Handles the given event.")
   (close-event [this id] "Closes an event."))
 
+(defn ^:private publish!
+  [bus message-type event]
+  (let [message {:bottle/message-type message-type
+                 :bottle/event event}]
+    (bus/publish! bus :all message)  
+    (bus/publish! bus (:bottle/category event) message)))
+
 (defrecord BasicEventHandler [manager bus function]
   EventHandler
   (handle-event
@@ -27,23 +34,20 @@
                          (event-manager/add! manager)
                          (function))]
           (log/trace (str "Publishing event creation:\n" (util/pretty event)))
-          (bus/publish! bus :all event)
-          (bus/publish! bus (:bottle/category event) event)
+          (publish! bus :created event)
           {:status :ok :event event}))
       (catch Exception e
         (log/error e (str "Exception thrown while processing event:\n"
                           event))
         {:status :exception})))
   (close-event [this id]
-    (if-let [event (event-manager/close! event-manager id)]
-      (do
+    (if-let [event (event-manager/close! manager id)]
+      (let [closed-message {:bottle/message-type :creation
+                            :bottle/event event}]
         (log/trace (str "Closed event:\n" (util/pretty event)) )
-        ;; Publish to all
-        ;; Publish to category bus
-        {:status :ok})
-      {:status :missing}
-      )
-    ))
+        (publish! bus :closed event)
+        {:status :ok :event event})
+      {:status :missing})))
 
 (defn event-handler
   [config]
