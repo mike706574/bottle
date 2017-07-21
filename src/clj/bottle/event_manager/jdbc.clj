@@ -7,7 +7,7 @@
 (defrecord JdbcEventManager [db]
   bottle.event-manager/EventManager
   (event [this id]
-    (jdbc/query db ["select password as encrypted-password from users where username = ?" username])
+
     )
 
   (events [this]

@@ -1,12 +1,11 @@
 (defproject org.clojars.mike706574/bottle "0.0.1-SNAPSHOT"
   :description "Describe me!"
-  :url "https://github.com/mike706574/bottle-webapp"
+  :url "https://github.com/mike706574/bottle"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
                  [org.clojure/spec.alpha "0.1.123"]
-                 [org.clojure/data.json "0.2.6"]
                  [org.clojure/core.async "0.3.443"]
                  [org.clojure/core.match "0.2.2"]
                  [com.stuartsierra/component "0.3.2"]
@@ -29,7 +28,8 @@
                  ;; Database
                  [org.clojure/java.jdbc "0.7.0"]
                  [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
-                 [postgresql "9.3-1102.jdbc41"]
+                 [org.postgresql/postgresql "9.4-1201-jdbc41"]
+                 [org.clojars.mike706574/postgresql-json "0.0.1-SNAPSHOT"]
                  [mysql/mysql-connector-java "6.0.6"]
 
                  ;; Web

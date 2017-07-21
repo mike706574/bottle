@@ -2,28 +2,26 @@
   (:require [bottle.database.misc :as misc]
             [bottle.users :refer [user-manager]]
             [buddy.hashers :as hashers]
-            [clojure.java.jdbc :as jdbc])
+            [clojure.java.jdbc :as jdbc]
+            [clojure.set :as set]
+            [taoensso.timbre :as log])
   (:import [bottle.users UserManager]))
 
-(def create-user-table
-  (jdbc/create-table-ddl :bar
+(def user-table-ddl
+  (jdbc/create-table-ddl :user
                          [[:id :serial "PRIMARY KEY"]
                           [:username "varchar(32)" "NOT NULL"]
                           [:password "char(128)" "NOT NULL"]]))
 
-(def db
-  {:dbtype "postgres"
-   :host "localhost"
-   :port 5432
-   :dbname "postgres"
-   :user "postgres"
-   :password ""})
+(defn create-user-table! [db] (jdbc/db-do-commands db [user-table-ddl]))
 
 (comment
-  (misc/drop-database db "bottle")
-  (misc/create-database db "bottle" create-user-table)
+  (try
+    (create-user-table! db)
+    (catch java.sql.BatchUpdateException ex
+      (log/debug (.getNextException ex) "OK")))
 
-  )
+  (misc/drop-table! db "drop table bar"))
 
 (defn find-by-username
   [db username]
