@@ -12,20 +12,22 @@
                           [:password "char(128)" "NOT NULL"]]))
 
 (def db
-  {:classname "org.postgresql.Driver"
-   :subprotocol "postgresql"
+  {:dbtype "postgres"
    :host "localhost"
    :port 5432
-   :dbname "foo"
+   :dbname "postgres"
    :user "postgres"
-   :password "postgres"})
+   :password ""})
 
 (comment
-  (misc/recreate-database
-   db "foo" create-user-table
-   )
+  (misc/drop-database db "bottle")
+  (misc/create-database db "bottle" create-user-table)
 
   )
+
+(defn find-by-username
+  [db username]
+  (jdbc/query db ["select password as encrypted-password from users where username = ?" username]))
 
 (defrecord JdbcUserManager [db]
   UserManager
@@ -35,10 +37,9 @@
       {:bottle/username username}))
 
   (authenticate [this {:keys [:bottle/username :bottle/password]}]
-    (jdbc/execute! [])
-    (jdbc/query db ["select password as encrypted-password from users where username = ?" username])
-
-    ))
+    (when-let [user (find-by-username db username)]
+      (when (hashers/check password (:encrypted-password user))
+        (dissoc user :encrypted-password)))))
 
 (comment
   (defmethod user-manager :jdbc

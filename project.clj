@@ -27,7 +27,7 @@
                  [com.taoensso/timbre "4.10.0"]
 
                  ;; Database
-                 [org.clojure/java.jdbc "0.6.1"]
+                 [org.clojure/java.jdbc "0.7.0"]
                  [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
                  [postgresql "9.3-1102.jdbc41"]
                  [mysql/mysql-connector-java "6.0.6"]
