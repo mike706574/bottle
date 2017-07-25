@@ -2,6 +2,7 @@
   (:require [aleph.http :as http]
             [bottle.client :as client]
             [bottle.macros :refer [with-system]]
+            [bottle.sanitation :refer [purge purge-all purge-message]]
             [boomerang.message :as message]
             [bottle.messaging.producer :as producer]
             [bottle.server.system :as system]
@@ -24,6 +25,7 @@
              :bottle/port port
              :bottle/log-path "/tmp"
              :bottle/user-manager-type :atomic
+             :bottle/event-manager-type :ref
              :bottle/event-content-type content-type
              :bottle/event-messaging event-messaging
              :bottle/streams [:event]
@@ -37,20 +39,6 @@
          ~'text (util/pretty ~'response)]
      ~@body))
 
-(defn purge [event]
-  (if (map? event)
-    (dissoc event :bottle/id :bottle/time)
-    event))
-
-(defn purge-message [message]
-  (if (= :timeout message)
-    message
-    (update message :bottle/event purge)))
-
-(defn purge-events
-  [body]
-  (into #{} (map purge body)))
-
 (deftest simple-test
   (with-system (system/system config)
     (let [client (-> {:host (str "localhost:" port)
@@ -58,8 +46,7 @@
                      (client/client)
                      (client/authenticate {:bottle/username "mike"
                                            :bottle/password "rocket"}))
-          foo-1 {:bottle/category :foo
-                 :bottle/closed? false
+          foo-1 {:bottle/category "foo"                 :bottle/closed? false
                  :count 4 }]
       ;; query
       (unpack-response (client/events client)
@@ -67,7 +54,7 @@
         (is (= {} (map-vals purge body))))
 
       ;; create
-      (unpack-response (client/create-event client {:bottle/category :foo :count 4})
+      (unpack-response (client/create-event client {:bottle/category "foo" :count 4})
         (is (= 201 status))
         (is (string? (:bottle/id body)))
         (is (instance? java.util.Date (:bottle/time body)))
@@ -76,7 +63,7 @@
         (let [id (:bottle/id body)]
           (unpack-response (client/events client)
             (is (= 200 status))
-            (is (= #{foo-1} (purge-events body)))
+            (is (= #{foo-1} (purge-all body)))
             (is (= id (:bottle/id (first body))))))))))
 
 (defn producer
@@ -94,20 +81,20 @@
           bus (:event-bus system)
           last-event (atom nil)
           last-foo (atom nil)
-          foo-1 {:bottle/category :foo
+          foo-1 {:bottle/category "foo"
                  :bottle/id "1"
                  :count 4}
           producer (producer system)]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
-      (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
+      (s/consume #(reset! last-foo %) (bus/subscribe bus "foo"))
 
       ;; query
       (unpack-response (client/events client)
         (is (= 200 status))
         (is (= [] body)))
 
-      (producer/produce producer (String. (message/encode "application/transit+json" {:bottle/category :foo :count 4}) "UTF-8"))
+      (producer/produce producer (String. (message/encode "application/transit+json" {:bottle/category "foo" :count 4}) "UTF-8"))
 
       (Thread/sleep 100)
 
@@ -125,7 +112,7 @@
           (is (string? (:bottle/id event)))
           (is (not (:bottle/closed? event)))
           (is (instance? java.util.Date (:bottle/time event)))
-          (is (= :foo (:bottle/category event)))
+          (is (= "foo" (:bottle/category event)))
           (is (= 4 (:count event))))))))
 
 (deftest creating-and-querying-events
@@ -136,35 +123,35 @@
                      (client/authenticate {:bottle/username "mike"
                                            :bottle/password "rocket"}))
           all-conn (client/connect client)
-          foo-conn (client/connect-by-category client :foo)
-          bar-conn (client/connect-by-category client :bar)
-          baz-conn (client/connect-by-category client :baz)
+          foo-conn (client/connect-by-category client "foo")
+          bar-conn (client/connect-by-category client "bar")
+          baz-conn (client/connect-by-category client "baz")
           bus (:event-bus system)
           last-event (atom nil)
           last-foo (atom nil)
           last-bar (atom nil)
-          foo-1 {:bottle/category :foo
+          foo-1 {:bottle/category "foo"
                  :bottle/closed? false
                  :count 4}
           foo-1-created {:bottle/message-type :created :bottle/event foo-1}
-          bar-2 {:bottle/category :bar
+          bar-2 {:bottle/category "bar"
                  :bottle/closed? false
                  :name "Bob"}
-          bar-2-created {:bottle/message-type :created :bottle/event bar-2} 
-          foo-3 {:bottle/category :foo
+          bar-2-created {:bottle/message-type :created :bottle/event bar-2}
+          foo-3 {:bottle/category "foo"
                  :bottle/closed? false
                  :count 15}
-          foo-3-created {:bottle/message-type :created :bottle/event foo-3} 
-          baz-4 {:bottle/category :baz
+          foo-3-created {:bottle/message-type :created :bottle/event foo-3}
+          baz-4 {:bottle/category "baz"
                  :bottle/closed? false
                  :numbers [1 2 3]}
-          baz-4-created {:bottle/message-type :created :bottle/event baz-4} 
+          baz-4-created {:bottle/message-type :created :bottle/event baz-4}
           {:keys [bottle/event-messaging bottle/event-content-type]} config
           producer (producer system)]
 
       (s/consume #(reset! last-event %) (bus/subscribe bus :all))
-      (s/consume #(reset! last-foo %) (bus/subscribe bus :foo))
-      (s/consume #(reset! last-bar %) (bus/subscribe bus :bar))
+      (s/consume #(reset! last-foo %) (bus/subscribe bus "foo"))
+      (s/consume #(reset! last-bar %) (bus/subscribe bus "bar"))
 
       ;; query
       (unpack-response (client/events client)
@@ -176,7 +163,7 @@
         (is (= #{} body)))
 
       ;; create
-      (unpack-response (client/create-event client {:bottle/category :foo :count 4})
+      (unpack-response (client/create-event client {:bottle/category "foo" :count 4})
         (is (= 201 status))
         (is (string? (:bottle/id body)))
         (is (instance? java.util.Date (:bottle/time body)))
@@ -196,19 +183,19 @@
       ;; query
       (unpack-response (client/categories client)
         (is (= 200 status))
-        (is (= #{:foo} body)))
+        (is (= #{"foo"} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
-        (is (= #{foo-1} (purge-events body))))
-      (unpack-response (client/events-by-category client :bar)
+        (is (= #{foo-1} (purge-all body))))
+      (unpack-response (client/events-by-category client "bar")
         (is (= 200 status))
-        (is (= #{} (purge-events body))))
-      (unpack-response (client/events-by-category client :foo)
+        (is (= #{} (purge-all body))))
+      (unpack-response (client/events-by-category client "foo")
         (is (= 200 status))
-        (is (= #{foo-1} (purge-events body))))
+        (is (= #{foo-1} (purge-all body))))
 
       ;; create
-      (unpack-response (client/create-event client {:bottle/category :bar :name "Bob"})
+      (unpack-response (client/create-event client {:bottle/category "bar" :name "Bob"})
         (is (= 201 status))
         (is (= bar-2 (purge body))))
 
@@ -223,7 +210,7 @@
       (is (= bar-2-created (purge-message @last-bar)))
 
       ;; create
-      (unpack-response (client/create-event client {:bottle/category :foo :count 15})
+      (unpack-response (client/create-event client {:bottle/category "foo" :count 15})
         (is (= 201 status))
         (is (= foo-3 (purge body))))
 
@@ -240,16 +227,16 @@
       ;; query
       (unpack-response (client/categories client)
         (is (= 200 status))
-        (is (= #{:foo :bar} body)))
+        (is (= #{"foo" "bar"} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
-        (is (= #{foo-1 bar-2 foo-3} (purge-events body))))
-      (unpack-response (client/events-by-category client :bar)
+        (is (= #{foo-1 bar-2 foo-3} (purge-all body))))
+      (unpack-response (client/events-by-category client "bar")
         (is (= 200 status))
-        (is (= #{ bar-2} (purge-events body))))
-      (unpack-response (client/events-by-category client :foo)
+        (is (= #{ bar-2} (purge-all body))))
+      (unpack-response (client/events-by-category client "foo")
         (is (= 200 status))
-        (is (= #{foo-1 foo-3} (purge-events body))))
+        (is (= #{foo-1 foo-3} (purge-all body))))
 
       ;; create via message
       (producer/produce producer (String. (message/encode "application/transit+json" baz-4) "UTF-8"))
@@ -265,19 +252,19 @@
       ;; query
       (unpack-response (client/categories client)
         (is (= 200 status))
-        (is (= #{:foo :bar :baz} body)))
+        (is (= #{"foo" "bar" "baz"} body)))
       (unpack-response (client/events client)
         (is (= 200 status))
-        (is (= #{foo-1 bar-2 foo-3 baz-4} (purge-events body))))
-      (unpack-response (client/events-by-category client :bar)
+        (is (= #{foo-1 bar-2 foo-3 baz-4} (purge-all body))))
+      (unpack-response (client/events-by-category client "bar")
         (is (= 200 status))
-        (is (= #{bar-2} (purge-events body))))
-      (unpack-response (client/events-by-category client :foo)
+        (is (= #{bar-2} (purge-all body))))
+      (unpack-response (client/events-by-category client "foo")
         (is (= 200 status))
-        (is (= #{foo-1 foo-3} (purge-events body))))
-      (unpack-response (client/events-by-category client :baz)
+        (is (= #{foo-1 foo-3} (purge-all body))))
+      (unpack-response (client/events-by-category client "baz")
         (is (= 200 status))
-        (is (= #{baz-4} (purge-events body)))))))
+        (is (= #{baz-4} (purge-all body)))))))
 
 (deftest closing-event
   (with-system (system/system config)
@@ -286,7 +273,7 @@
                      (client/client)
                      (client/authenticate {:bottle/username "mike"
                                            :bottle/password "rocket"}))
-          foo-1 {:bottle/category :foo
+          foo-1 {:bottle/category "foo"
                  :bottle/closed? false
                  :count 4}]
       ;; query
@@ -295,7 +282,7 @@
         (is (= {} (map-vals purge body))))
 
       ;; create
-      (unpack-response (client/create-event client {:bottle/category :foo :count 4})
+      (unpack-response (client/create-event client {:bottle/category "foo" :count 4})
         (is (= 201 status))
         (is (string? (:bottle/id body)))
         (is (instance? java.util.Date (:bottle/time body)))
@@ -304,7 +291,7 @@
         (let [id (:bottle/id body)]
           (unpack-response (client/events client)
             (is (= 200 status))
-            (is (= #{foo-1} (purge-events body)))
+            (is (= #{foo-1} (purge-all body)))
             (is (= id (:bottle/id (first body)))))
 
           (unpack-response (client/close-event client id)

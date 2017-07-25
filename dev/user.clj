@@ -51,6 +51,7 @@
              :bottle/secret-key "secret"
              :bottle/event-content-type content-type
              :bottle/event-messaging stream-config
+             :bottle/event-manager-type :ref
              :bottle/user-manager-type :atomic
              :bottle/streams [:event]
              :bottle/users {"mike" "rocket"}})
@@ -111,6 +112,6 @@
       (client/client)
       (client/authenticate {:bottle/username "mike"
                             :bottle/password "rocket"})
-      (client/create-event {:bottle/category :foo :count 4}))
+      (client/create-event {:bottle/category "foo" :count 4}))
 
   )

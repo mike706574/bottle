@@ -20,17 +20,28 @@
     (catch java.sql.BatchUpdateException ex
       (throw (.getNextException ex)))))
 
+(def events-query "select id as \"bottle/id\", time as \"bottle/time\", category as \"bottle/category\", data from event")
+(def event-query (str events-query " where id = ?"))
+
+(defn ^:private row->event
+  [{data :data :as row}]
+  (-> row
+      (dissoc :data)
+      (merge data)))
+
+(defn ^:private select-event
+  [db id]
+  (first (jdbc/query db [event-query id] {:row-fn row->event})))
+
 (defn ^:private select-events
   [db]
-  (letfn [(event [{data :data :as row}]
-            (-> row
-                (dissoc :data)
-                (merge data)))]
-    (jdbc/query db ["select id as \"bottle/id\", time as \"bottle/time\", category as \"bottle/category\", data from event"] {:row-fn event})))
+  (jdbc/query db [events-query] {:row-fn row->event}))
+
+(def categories-query "select distinct category from event")
 
 (defn ^:private select-categories
   [db]
-  (jdbc/query db ["select distinct category from event"]))
+  (jdbc/query db [categories-query]))
 
 (defn ^:private insert-event!
   [db template]
@@ -42,7 +53,7 @@
 (defrecord PostgresEventManager [db]
   bottle.event-manager/EventManager
   (event [this id]
-    nil)
+    (select-event db id))
 
   (events [this]
     (select-events db))

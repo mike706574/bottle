@@ -1,32 +1,9 @@
 (ns bottle.event-manager.ref
   (:require [bottle.event-manager :refer [event-manager]]
+            [bottle.event-manager.query :as query]
             [bottle.util :as util]
+            [clojure.core.match :refer [match]]
             [taoensso.timbre :as log]))
-
-(def date-comparator #(compare (:bottle/time %1) (:bottle/time %2)))
-
-(defn prop-xform
-  [option-key prop-key]
-  (fn prop [options]
-    (let [option (get options option-key)]
-      (when-not (nil? option)
-        (filter #(= (get % prop-key) option))))))
-
-(defn category-xform
-  [{category :category}]
-  (when category
-    (filter #(= (:bottle/category %) (keyword category)))))
-
-(defn page-xform
-  [{page-number :page-number page-size :page-size :as options}]
-  (cond
-    (and page-number page-size) (comp (drop (* page-size (dec page-number)))
-                                      (take page-size))
-    (or page-number page-size) (throw (ex-info "Both page-number and page-size are required for pagination." options))))
-
-(def factories [page-xform
-                category-xform
-                (prop-xform :closed? :bottle/closed?)])
 
 (defrecord RefEventManager [counter events]
   bottle.event-manager/EventManager
@@ -34,13 +11,10 @@
     (get @events id))
 
   (events [this]
-    @events)
+    (vec (vals @events)))
 
   (events [this options]
-    (let [xforms (->> factories
-                     (map #(% options))
-                     (filter identity))]
-      (into [] (apply comp xforms) (vals @events))))
+    (into [] (-> options query/clauses query/xform) (vals @events)))
 
   (categories [this]
     (set (map :bottle/category (vals @events))))

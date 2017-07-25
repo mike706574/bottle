@@ -29,7 +29,6 @@
                  [org.clojure/java.jdbc "0.7.0"]
                  [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
                  [org.postgresql/postgresql "9.4-1201-jdbc41"]
-                 [org.clojars.mike706574/postgresql-json "0.0.1-SNAPSHOT"]
                  [mysql/mysql-connector-java "6.0.6"]
 
                  ;; Web

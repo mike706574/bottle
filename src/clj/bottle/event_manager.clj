@@ -17,8 +17,9 @@
 
 (defmethod event-manager :default
   [{event-manager-type :bottle/event-manager-type :as config}]
-  (throw (ex-info (str "Invalid event manager type "
-                       (name event-manager-type))
+  (throw (ex-info (if event-manager-type
+                    (str "Invalid event manager type: " event-manager-type)
+                    "No event manager type specified.")
                   (or config {}))))
 
 (s/def :bottle/event-manager (partial satisfies? EventManager))
