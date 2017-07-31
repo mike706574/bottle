@@ -38,7 +38,7 @@
                  [ring/ring-defaults "0.3.1"]
                  [ring-middleware-format "0.7.2"]
                  [compojure "1.6.0"]
-                 [selmer "1.11.7"]
+                 [selmer "1.11.0"]
 
                  ;; Security
                  [buddy/buddy-hashers "1.2.0"]
