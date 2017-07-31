@@ -16,10 +16,10 @@
                  [manifold "0.1.6"]
                  [byte-streams "0.2.3"]
                  [environ "1.1.0"]
-                 [clj-time "0.13.0"]
+                 [clj-time "0.14.0"]
 
                  ;; Messaging
-                 [com.rabbitmq/amqp-client "4.1.1"]
+                 [com.rabbitmq/amqp-client "4.2.0"]
                  [org.apache.activemq/activemq-core "5.7.0"]
 
                  ;; Logging
@@ -27,18 +27,18 @@
 
                  ;; Database
                  [org.clojure/java.jdbc "0.7.0"]
-                 [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
+                 [clojure.jdbc/clojure.jdbc-c3p0 "0.3.3"]
                  [org.postgresql/postgresql "9.4-1201-jdbc41"]
                  [mysql/mysql-connector-java "6.0.6"]
 
                  ;; Web
                  [aleph "0.4.3"]
                  [ring/ring-anti-forgery "1.1.0"]
-                 [ring-cors "0.1.10"]
-                 [ring/ring-defaults "0.3.0"]
+                 [ring-cors "0.1.11"]
+                 [ring/ring-defaults "0.3.1"]
                  [ring-middleware-format "0.7.2"]
                  [compojure "1.6.0"]
-                 [selmer "1.10.7"]
+                 [selmer "1.11.7"]
 
                  ;; Security
                  [buddy/buddy-hashers "1.2.0"]
