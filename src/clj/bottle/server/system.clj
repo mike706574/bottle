@@ -89,7 +89,7 @@
    :authenticator (auth/authenticator config)
    :conn-manager (conn/manager config)
    :handler-factory (server-handler/factory config)
-   :app (component/using (service/aleph-service config) [:event-consumer])})
+   :app (service/aleph-service config)})
 
 (defn system
   [config]
