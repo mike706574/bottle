@@ -2,13 +2,13 @@
   (:require [bottle.messaging.producer :refer [producer]])
   (:import [bottle.messaging.producer Producer]))
 
-(defrecord ActiveMQProducer [broker-path queue-name connector]
+(defrecord ActiveMQProducer [broker-path queue-name]
   Producer
   (produce [this message]
     (with-open [conn (.createConnection (org.apache.activemq.ActiveMQConnectionFactory. broker-path))
-                session (.createSession conn false javax.jms.Session/AUTO_ACKNOWLEDGE)]
-      (let [producer (.createProducer session (.createQueue session queue-name))
-            message (.createTextMessage session message)]
+                session (.createSession conn false javax.jms.Session/AUTO_ACKNOWLEDGE)
+                producer (.createProducer session (.createQueue session queue-name))]
+      (let [message (.createTextMessage session message)]
         (.setDeliveryMode producer (javax.jms.DeliveryMode/NON_PERSISTENT))
         (.send producer message)))))
 

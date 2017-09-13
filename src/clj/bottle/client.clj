@@ -26,13 +26,9 @@
 (defn parse
   [response]
   (let [response-content-type (get-in response [:headers "content-type"])]
-    (println "RESPONSE:" response-content-type)
-    (println "RESPONSEeawklj:" content-type)
-    (if (and (contains? response :body) (= response-content-type content-type))
-      (do (println "YES")
-        (update response :body (comp (partial message/decode content-type))))
-      (do (println "NO")
-        response))))
+    (if (and (contains? response :body))
+      (update response :body (comp (partial message/decode content-type)))
+      response)))
 
 (defn transit-get
   [url]
@@ -110,7 +106,7 @@
                                  "Accept" content-type
                                  "Authorization" (str "Token " token)}
                        :throw-exceptions false})))
-  
+
   (events [this]
     (parse @(http/get (str (http-url host) "/api/events")
                       {:headers {"Content-Type" content-type

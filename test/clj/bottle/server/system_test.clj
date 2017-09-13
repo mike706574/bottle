@@ -1,6 +1,5 @@
 (ns bottle.server.system-test
-  (:require [aleph.http :as http]
-            [bottle.client :as client]
+  (:require [bottle.client :as client]
             [bottle.macros :refer [with-system]]
             [bottle.sanitation :refer [purge purge-all purge-message]]
             [boomerang.message :as message]

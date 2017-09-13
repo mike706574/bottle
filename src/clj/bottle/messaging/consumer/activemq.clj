@@ -29,7 +29,7 @@
     (.close consumer)
     (.close session)
     (.close conn)
-    (dissoc this :cnn :session :consumer)))
+    (dissoc this :conn :session :consumer)))
 
 (defmethod consumer :active-mq
   [{:keys [:bottle.messaging/broker-path :bottle.messaging/queue-name] :as config}]
